@@ -38,5 +38,13 @@ We can start working on projects after `stage #1` and `stage #2` are understood,
 - cmake  
 - glfw  
 - libxrandr (package)
+- libxrandr-dev (package)
+- libxinerama-dev (package)
+- libxcursor-dev (package)
+- libxi-dev (package)
 
-**Note:** You can execute the setup script: `setup.sh` in the base directory to configure glfw for you with cmake.  
+**Note:** The above dependencies annotated with `(package)` might be required by your package manager when running cmake.
+
+##### Alternative
+You can execute the setup script: `setup.sh` in the base directory to configure glfw for you with cmake.  
+**Note:** Currently it is configured using Ubuntu's package manager: `apt-get`. Please adapt the script if you are using a different package manager.
