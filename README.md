@@ -48,3 +48,9 @@ We can start working on projects after `stage #1` and `stage #2` are understood,
 ##### Alternative
 You can execute the setup script: `setup.sh` in the base directory to configure glfw for you with cmake.  
 **Note:** Currently it is configured using Ubuntu's package manager: `apt-get`. Please adapt the script if you are using a different package manager.
+
+#### Additional Notes
+If `GLAD`, `KHR` and `glad.c` files are missing, they can be recreated using:
+https://glad.dav1d.de/#language=c&specification=gl&api=gl%3D3.3&api=gles1%3Dnone&api=gles2%3Dnone&api=glsc2%3Dnone&profile=core&loader=on
+
+Ensure you are using openGL Core and `generate a loader` is selected.
