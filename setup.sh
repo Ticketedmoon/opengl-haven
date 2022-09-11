@@ -16,3 +16,6 @@ cd ../../
 mkdir -p build
 
 cmake .
+
+cd ./build
+make
