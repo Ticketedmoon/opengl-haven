@@ -33,3 +33,10 @@ A project based around learning OpenGL. This repo will contain files about diffe
 After `stage #1` and `stage #2` you will have a good body of knowledge and be comfortable in OpenGL.  
 Use `stage #3` for refinement. At this stage you will pick items and slot them into your current existing knowledge.  
 We can start working on projects after `stage #1` and `stage #2` are understood, or perhaps a little into `stage #3`. 
+
+#### Prerequisites
+- cmake  
+- glfw  
+- libxrandr (package)
+
+**Note:** You can execute the setup script: `setup.sh` in the base directory to configure glfw for you with cmake.  
