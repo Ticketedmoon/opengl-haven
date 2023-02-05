@@ -6,6 +6,7 @@
 // Temporarily declare
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void render(GLFWwindow* window);
+void processInput(GLFWwindow* window);
 
 int main() 
 {
@@ -19,7 +20,7 @@ int main()
 	int WINDOW_WIDTH = 800;
 	int WINDOW_HEIGHT = 600;
 
-    GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Chaos", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -50,6 +51,14 @@ void render(GLFWwindow* window)
 {
 	while(!glfwWindowShouldClose(window))
 	{
+		// Input
+		processInput(window);
+
+		// Rendering commands
+		glClearColor(0.0f, 1.0f, 0.2f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		// check and call events and swap the buffers
 		glfwSwapBuffers(window);
 		glfwPollEvents();    
 	}
@@ -58,4 +67,11 @@ void render(GLFWwindow* window)
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
+}
+
+void processInput(GLFWwindow *window)
+{
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+		glfwSetWindowShouldClose(window, true);
+	}
 }
