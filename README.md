@@ -23,7 +23,7 @@ The example above uses `float` as the type for each vertex attribute and hence a
 
 ---
 
-#### What will be demonstrated [✅/❌]:
+#### What will be demonstrated [✅ / ❌]:
 **Stage #1**
 - Making a Window [✅]
 - Storing vertices [✅]
