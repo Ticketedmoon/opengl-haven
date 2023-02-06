@@ -13,7 +13,7 @@ add_subdirectory(./deps/glfw build)
 
 FIND_PACKAGE(OpenGL REQUIRED)
 
-SET(SOURCE_FILES ./src/main.cpp)
+SET(SOURCE_FILES ./src/triangle.cpp)
 
 ADD_EXECUTABLE(${PROJECT_NAME} ${SOURCE_FILES})
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} glfw)
