@@ -23,6 +23,15 @@ The example above uses `float` as the type for each vertex attribute and hence a
 
 ---
 
+#### Progress Report - Showing what's been built (Screenshots/Videos):
+
+**The "simple" triangle** - 350 lines of openGL code + comments  
+
+![Mon 06 Feb 2023 20:48:04 GMT](https://user-images.githubusercontent.com/21260839/217082227-c4430511-97d0-4559-9d19-53f47c54fa9e.png)
+
+
+---
+
 #### What will be demonstrated [✅ / ❌]:
 **Stage #1**
 - Making a Window [✅]
