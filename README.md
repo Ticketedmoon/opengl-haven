@@ -3,8 +3,23 @@ A project based around learning OpenGL. This repo will contain files about diffe
 
 ---
 
-#### The graphic Pipeline
+#### The graphic Pipeline (fig 1.0)
 ![Graphics Pipeline Image from LearnOpenGL](https://learnopengl.com/img/getting-started/pipeline.png)
+
+---
+
+#### Normalized Device Coordinates (NDC) (fig 1.1)
+![Normalized Device Coorindinates Graph Image](https://learnopengl.com/img/getting-started/ndc.png)
+
+**Note:** The NDC coordinates will then be transformed to screen-space coordinates via the viewport transform using the data you provided with glViewport. The resulting screen-space coordinates are then transformed to fragments as inputs to your fragment shader.
+
+---
+
+#### Format of vertex buffer data:
+![Vertex Buffer Data format](https://learnopengl.com/img/getting-started/vertex_attribute_pointer.png);
+
+**Note:** The following diagram shows the size of each vertex attribute inside a contigious block of memory on the GPU.  
+The example above uses `float` as the type for each vertex attribute and hence are 4 bytes in size.
 
 ---
 
