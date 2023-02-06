@@ -1,4 +1,5 @@
 glfw/
+deps/glfw/*
 CMakeFiles/
 build/
 Makefile
