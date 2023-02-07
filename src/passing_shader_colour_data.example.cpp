@@ -24,8 +24,8 @@ const char *vertexShaderSource =
     "void main() \n"
     "{\n"
     "   gl_Position = vec4(aPos.xyz, 1.0); \n" // 'swizzling'
-	"   vertexColourA = vec4(0.0f, 0.6f, 0.85f, 1.0f); \n"
-	"   vertexColourB = vec4(1.0f, 1.6f, 0.0f, 1.0f); \n"
+	"   vertexColourA = vec4(0.0f, 0.0f, 0.85f, 1.0f); \n"
+	"   vertexColourB = vec4(0.1f, 0.5f, 0.3f, 1.0f); \n"
     "}\0";
 
 const char *fragmentShaderSourceA = 
