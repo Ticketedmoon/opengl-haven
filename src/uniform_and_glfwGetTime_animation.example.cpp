@@ -214,6 +214,10 @@ void draw()
 
 	// Inject colour value into `uniform` which is scopred to shaderProgram.
 	int vertexColourALocation = glGetUniformLocation(shaderProgramIdA, "vertexColourA");
+	if (vertexColourALocation == -1)
+	{
+		std::cout << "FAILED TO FIND VERTEX COLOUR LOCATION ON GPU" << std::endl;
+	}
 	glUseProgram(shaderProgramIdA);
 	glUniform4f(vertexColourALocation, 0.0f, value, 0.0f, 1.0f);
 
