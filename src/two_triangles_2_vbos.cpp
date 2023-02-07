@@ -33,23 +33,33 @@ const char *fragmentShaderSource =
     "}\0";
 
 
-/* A Vertex Buffer Object (VBO) and Vertex Array Object (VAO) to batch send data to the gpu at once. 
-   This is with a buffer ID using the glGenBuffers function.
+/* 
+	A Vertex Buffer Object (VBO) and Vertex Array Object (VAO) to batch send data to the gpu at once. 
+	This is with a buffer ID using the glGenBuffers function.
 */
-unsigned int vboId, vaoId;
+unsigned int vboId, vboIdB, 
+			 vaoId, vaoIdB, 
+			 eboId;
 
 // Shader references and shader program reference.
 unsigned int vertexShaderId, fragmentShaderId, shaderProgramId;
 
-// Triangle vertices, note the range being between [-1, 1] which is required by OpenGL.
-// This range is known as 'normalized device coordinates' - See README
-// Since OpenGL works in a 3D space, and we want to render a 2D triangle, the 'Z' value is 0.
+float triangleOneVertices[] = {
+    -0.6f, 0.0f, 0.0f,
+    -0.3f, 0.0f, 0.0f, 
+    -0.45f,  0.3f, 0.0f,
+};
+
 float vertices[] = {
-	// x, y, z
-    -0.2f, -0.2f, 0.0f,
-     0.2f, -0.2f, 0.0f,
-     0.0f,  0.3f, 0.0f
-};  
+    0.6f, 0.0f, 0.0f,
+    0.3f, 0.0f, 0.0f, 
+    0.45f,  0.3f, 0.0f,
+};
+
+// Specify the order at which we want to draw these vertices in.
+unsigned int indices[] = {
+	0, 1, 2
+};
 
 // Function Declarations.
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -97,7 +107,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "The Lone Blue Triangle", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Application", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -121,7 +131,9 @@ int main()
 	render(window);
 
 	glDeleteVertexArrays(1, &vaoId);
+	glDeleteVertexArrays(1, &vaoIdB);
     glDeleteBuffers(1, &vboId);
+    glDeleteBuffers(1, &vboIdB);
     glDeleteProgram(shaderProgramId);
 
 	glfwTerminate();
@@ -143,6 +155,11 @@ void render(GLFWwindow* window)
 
 	buildShaderProgram();
 	storeVertexDataOnGpu();
+
+	// Wireframe mode
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	// Default: glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	// Point: glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
 
 	/*
 		Main loop.
@@ -190,104 +207,47 @@ void draw()
 	glUseProgram(shaderProgramId);
 
 	glBindVertexArray(vaoId);
+	glEnableVertexAttribArray(0);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-	/*
-		takes as its first argument the OpenGL primitive type we would like to draw.
-		The second argument specifies the starting index of the vertex array we'd like to draw; we just leave this at 0. 
-		The last argument specifies how many vertices we want to draw, 
-			which is 3 (we only render 1 triangle from our data, which is exactly 3 vertices long).
-	*/
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glBindVertexArray(vaoIdB);
+	glEnableVertexAttribArray(0);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
-/*
-	Core OpenGL requires that we use a Vertex Array Object or VAO so it knows what to do with our vertex inputs. 
-	If we fail to bind a VAO, OpenGL will most likely refuse to draw anything.
-
-	The VAO stores our vertex attribute configuration and which VBO to use. 
-	Usually when you have multiple objects you want to draw, you first generate/configure all 
-	the VAOs (and thus the required VBO and attribute pointers) and store those for later use. 
-	The moment we want to draw one of our objects, we take the corresponding VAO, bind it, then draw the object and unbind the VAO again.
-*/
 void storeVertexDataOnGpu()
 {
-	/* The first parameter here describes the size or amount of vertex buffer objects to store in the gpu's memory.
-	   If greater than 1, we need to update or VAO above to an array.
-	   This will return a list of IDs corresponding to each generated VBO and store them in our VAO object.
-	   Only increase this to 2 or more if we pass in the reference/address of an array of VBOs.
-	*/
 	glGenVertexArrays(1, &vaoId);
+	glGenVertexArrays(1, &vaoIdB);
 
 	glGenBuffers(1, &vboId);
-
-	/* 1. bind Vertex Array Object
-	   OpenGL has many types of buffer objects and the buffer type of a vertex buffer object is GL_ARRAY_BUFFER. 
-	   OpenGL allows us to bind to several buffers at once as long as they have a different buffer type. 
-	*/
-	glBindVertexArray(vaoId);
-
-	// 2. copy our vertices array in a buffer for OpenGL to use
+	glGenBuffers(1, &vboIdB);
+	glGenBuffers(1, &eboId);
+	
+	// Array Object becomes active after binding, creating the object.
+	glBindVertexArray(vboId);
 	glBindBuffer(GL_ARRAY_BUFFER, vboId);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(triangleOneVertices), triangleOneVertices, GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);	
 
-	/*
-		From this point on any buffer calls we make (on the GL_ARRAY_BUFFER target) will be used to configure 
-		the currently bound buffer, which is VBO. 
-		Then we can make a call to the glBufferData function that copies the previously defined vertex data 
-		into the buffer's memory.
-		`glBufferData(...)` is a function specifically targeted to copy user-defined data into the currently bound buffer. 
-
-		The fourth parameter specifies how we want the graphics card to manage the given data. This can take 3 forms:
-		GL_STREAM_DRAW: the data is set only once and used by the GPU at most a few times.
-		GL_STATIC_DRAW: the data is set only once and used many times.
-		GL_DYNAMIC_DRAW: the data is changed a lot and used many times.
-		Correctly selecting the above will allow the GPU to optimize for reads and writes of the vertex data.
-	*/
+	glBindVertexArray(vboIdB);
+	glBindBuffer(GL_ARRAY_BUFFER, vboIdB);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);	
 
-	/*
-		3. Set our vertex attributes pointers
-		
-			We have to specify how OpenGL should interpret the vertex data before rendering.
-		    Vertices must be in contigious memory such that the linking below can apply on all vertex sequentially.
-		    See README diagram, fig 1.2.
+	// Note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
+    glBindBuffer(GL_ARRAY_BUFFER, 0); 
 
-		    Each vertex attribute takes its data from memory managed by a VBO and 
-		    which VBO it takes its data from (you can have multiple VBOs) is determined by the VBO currently bound to GL_ARRAY_BUFFER 
-		    when calling glVertexAttribPointer.
-			
-		    Since the previously defined VBO is still bound before calling glVertexAttribPointer vertex attribute 0 
-		    is now associated with its vertex data.
+    // Remember: do NOT unbind the EBO / call the following while a VAO is active as the bound EBO IS stored in the VAO; keep the EBO bound.
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-			a. The first parameter specifies which vertex attribute we want to configure. 
-				Remember that we specified the location of the position vertex attribute in the vertex shader with layout (location = 0). 
-				This sets the location of the vertex attribute to 0 and since we want to pass data to this vertex attribute, we pass in 0.
-
-			b. The next argument specifies the size of the vertex attribute. The vertex attribute is a vec3 so it is composed of 3 values.
-
-			c. The third argument specifies the type of the data which is GL_FLOAT (a vec* in GLSL consists of floating point values).
-
-			d. The next argument specifies if we want the data to be normalized. 
-				If we're inputting integer data types (int, byte) and we've set this to GL_TRUE, 
-				the integer data is normalized to 0 (or -1 for signed data) and 1 when converted to float. 
-				This is not relevant for us since our data type is float so we'll leave this at GL_FALSE.
-			
-			e. The fifth argument is known as the `stride` and tells us the space between consecutive vertex attributes. 
-				Since the next set of position data is located exactly 3 times the size of a float away we specify that value as the stride. 
-				Note that since we know that the array is tightly packed / contigious (there is no space between the next vertex attribute value) 
-				we could've also specified the stride as 0 to let OpenGL determine the stride (this only works when values are tightly packed). 
-				whenever we have more vertex attributes we have to carefully define the spacing between each vertex attribute.
-
-			f. the last parameter is of type void* and thus requires that weird cast. 
-				this is the offset of where the position data begins in the buffer. 
-				since the position data is at the start of the data array this value is just 0.
-	*/
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-
-	/*
-		Enable the vertex attribute with glEnableVertexAttribArray giving the vertex attribute location as its argument; 
-		vertex attributes are disabled by default.
-	*/
-	glEnableVertexAttribArray(0);  
+    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
+    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
+    glBindVertexArray(0); 
 }
 
 unsigned int applyShader(GLenum shaderType, const char *source)
