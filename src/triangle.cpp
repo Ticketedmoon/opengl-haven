@@ -36,10 +36,10 @@ const char *fragmentShaderSource =
 /* A Vertex Buffer Object (VBO) and Vertex Array Object (VAO) to batch send data to the gpu at once. 
    This is with a buffer ID using the glGenBuffers function.
 */
-GLuint vboId, vaoId;
+unsigned int vboId, vaoId;
 
 // Shader references and shader program reference.
-GLint vertexShaderId, fragmentShaderId, shaderProgramId;
+unsigned int vertexShaderId, fragmentShaderId, shaderProgramId;
 
 // Triangle vertices, note the range being between [-1, 1] which is required by OpenGL.
 // This range is known as 'normalized device coordinates' - See README
@@ -326,7 +326,7 @@ void buildShaderProgram()
 	debug(shaderProgramId, 2);
 }
 
-void debug(GLint shaderRef, size_t mode)
+void debug(unsigned int shaderRef, size_t mode)
 {
 	int success;
 	char infoLog[512];
