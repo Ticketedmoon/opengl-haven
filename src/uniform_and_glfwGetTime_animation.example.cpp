@@ -219,6 +219,20 @@ void draw()
 		std::cout << "FAILED TO FIND VERTEX COLOUR LOCATION ON GPU" << std::endl;
 	}
 	glUseProgram(shaderProgramIdA);
+
+	/*
+		glUniform methods
+
+		f: the function expects a float as its value.
+		i: the function expects an int as its value.
+		ui: the function expects an unsigned int as its value.
+		3f: the function expects 3 floats as its value.
+		fv: the function expects a float vector/array as its value.
+		
+		Whenever you want to configure an option of OpenGL simply pick the overloaded function that corresponds with your type. 
+		In our case we want to set 4 floats of the uniform individually so we pass our data via `glUniform4f` 
+		(note that we also could've used the fv version).
+	*/
 	glUniform4f(vertexColourALocation, 0.0f, value, 0.0f, 1.0f);
 
 	glBindVertexArray(vaos[0]);
