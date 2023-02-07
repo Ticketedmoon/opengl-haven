@@ -55,13 +55,37 @@ float vertices[] = {
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void render(GLFWwindow* window);
 
-void storeVertexDataOnGpu();
-void applyVertexShader();
-void applyFragmentShader();
+/*
+	Creating the shader below will instantiate memory on the GPU
+	and return an `id` reference to the shader.
+	
+	We must provide the type of shader we want to create as an argument to glCreateShader. 
+
+	We attach the shader source code to the shader object and compile the shader.
+	`glShaderSource` takes the shader object to compile to as its first argument.
+	The second argument specifies how many strings we're passing as source code, which is only one.
+	The third parameter is the actual source code of the vertex shader,
+	and we can leave the 4th parameter to NULL.
+*/
+unsigned int applyShader(GLenum shaderType, const char *source);
+
+/*
+	A shader program object is the final linked version of multiple shaders combined. 
+	To use the recently compiled shaders we have to:
+	1. link them to a shader program object 
+	2. and then activate this shader program when rendering objects. 
+	
+	The activated shader program's shaders will be used when we issue render calls.
+
+	When linking the shaders into a program it links the outputs of each shader to the inputs of the next shader. 
+	This is also where you'll get linking errors if your outputs and inputs do not match.
+*/
 void buildShaderProgram();
+void storeVertexDataOnGpu();
+
 void draw();
 
-void debug(GLint shaderRef, size_t mode);
+void debug(unsigned int shaderRef, size_t mode);
 void processInput(GLFWwindow* window);
 
 int main() 
@@ -106,9 +130,17 @@ int main()
 
 void render(GLFWwindow* window)
 {
-	// Shaders
-	applyVertexShader();
-	applyFragmentShader();
+	/*
+		The vertex shader manages the vertex points on the screen and the associated vertex attributes.
+	*/
+	vertexShaderId = applyShader(GL_VERTEX_SHADER, vertexShaderSource);
+
+	/*
+		The fragment shader is the second and final shader we're going to create for rendering a triangle. 
+		The fragment shader is all about calculating the color output of your pixels. 
+	*/
+	fragmentShaderId = applyShader(GL_FRAGMENT_SHADER, fragmentShaderSource);
+
 	buildShaderProgram();
 	storeVertexDataOnGpu();
 
@@ -260,55 +292,15 @@ void storeVertexDataOnGpu()
 	// SEE: https://learnopengl.com/Getting-started/Hello-Triangle#:~:text=Drawing%20an%20object%20in%20OpenGL%20would%20now%20look%20something%20like%20this%3A
 }
 
-void applyVertexShader()
+unsigned int applyShader(GLenum shaderType, const char *source)
 {
-	/*
-		Similar to the above, creating the shader below will instantiate memory on the GPU
-		and return an `if` reference to the shader.
-		
-		We provide the type of shader we want to create as an argument to glCreateShader. 
-		Since we're creating a vertex shader we pass in GL_VERTEX_SHADER.
-	*/
-	vertexShaderId = glCreateShader(GL_VERTEX_SHADER);
-
-	/*
-		We attach the shader source code to the shader object and compile the shader.
-		`glShaderSource` takes the shader object to compile to as its first argument.
-		The second argument specifies how many strings we're passing as source code, which is only one.
-		The third parameter is the actual source code of the vertex shader,
-		and we can leave the 4th parameter to NULL.
-	*/
-	glShaderSource(vertexShaderId, 1, &vertexShaderSource, NULL);
-	glCompileShader(vertexShaderId);
-
-	debug(vertexShaderId, 1);
+	unsigned int shaderReferenceId = glCreateShader(shaderType);
+	glShaderSource(shaderReferenceId, 1, &source, NULL);
+	glCompileShader(shaderReferenceId);
+	debug(shaderReferenceId, 1);
+	return shaderReferenceId;
 }
 
-/*
-	The fragment shader is the second and final shader we're going to create for rendering a triangle. 
-	The fragment shader is all about calculating the color output of your pixels. 
-	To keep things simple the fragment shader will always output an orange-ish color.
-*/
-void applyFragmentShader()
-{
-	fragmentShaderId = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShaderId, 1, &fragmentShaderSource, NULL);
-	glCompileShader(fragmentShaderId);
-
-	debug(fragmentShaderId, 1);
-}
-
-/*
-	A shader program object is the final linked version of multiple shaders combined. 
-	To use the recently compiled shaders we have to:
-	1. link them to a shader program object 
-	2. and then activate this shader program when rendering objects. 
-	
-	The activated shader program's shaders will be used when we issue render calls.
-
-	When linking the shaders into a program it links the outputs of each shader to the inputs of the next shader. 
-	This is also where you'll get linking errors if your outputs and inputs do not match.
-*/
 void buildShaderProgram()
 {
 	// Same `id` reference patern as with the complation of the Vertex and Fragment shaders. 
