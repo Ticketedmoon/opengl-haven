@@ -13,19 +13,24 @@ const char *vertexShaderSource =
     "layout (location = 0) in vec3 aPos; \n"
     "layout (location = 1) in vec3 aColour; \n"
     "out vec3 outputColour; \n"
+	"out vec3 outputPos; \n"
+	"uniform float offset; \n"
     "void main() \n"
     "{\n"
-    "   gl_Position = vec4(aPos.xyz, 1.0); \n" // 'swizzling'
+    "   float x = aPos.x + offset; \n" // 'swizzling'
+    "   gl_Position = vec4(x, aPos.y, aPos.z, 1.0); \n" // 'swizzling'
     "   outputColour = aColour; \n" // 'swizzling'
+    "   outputPos = vec3(x, aPos.yz); \n" // 'swizzling'
     "}\0";
 
 const char *fragmentShaderSource = 
 	"#version 330 core \n"
     "out vec4 FragColour; \n"
 	"in vec3 outputColour; \n"
+	"in vec3 outputPos; \n"
     "void main() \n"
     "{\n"
-    "   FragColour = vec4(outputColour, 1.0); \n"
+    "   FragColour = vec4(outputPos, 1.0); \n"
     "}\0";
 
 unsigned int vbos[1], vaos[1];
@@ -35,8 +40,8 @@ unsigned int vertexShaderId, fragmentShaderId, shaderProgramId;
 
 float vertices[] = {
 	// Position Data      Colour data
-    -0.3f, -0.3f, 0.0f,   1.0f, 0.0f, 0.0f,
-     0.3f, -0.3f, 0.0f,   0.0f, 1.0f, 0.0f,
+     0.3f, -0.3f, 0.0f,   1.0f, 0.0f, 0.0f,
+    -0.3f, -0.3f, 0.0f,   0.0f, 1.0f, 0.0f,
      0.0f,  0.6f, 0.0f,    0.0f, 0.0f, 1.0f
 };
 
@@ -146,7 +151,9 @@ void draw()
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	// Inject colour value into `uniform` which is scopred to shaderProgram.
+	int offset = glGetUniformLocation(shaderProgramId, "offset");
 	glUseProgram(shaderProgramId);
+	glUniform1f(offset, 0);
 
 	glBindVertexArray(vaos[0]);
 
@@ -206,8 +213,8 @@ unsigned int buildShaderProgram(unsigned int fragmentShaderId)
 	glLinkProgram(shaderProgramId);
 
 	// Delete the shader objects once we've linked them into the program object; we no longer need them anymore.
-	// glDeleteShader(vertexShaderId);
-	// glDeleteShader(fragmentShaderId); 
+	glDeleteShader(vertexShaderId);
+	glDeleteShader(fragmentShaderId); 
 
 	debug(shaderProgramId, 2);
 
