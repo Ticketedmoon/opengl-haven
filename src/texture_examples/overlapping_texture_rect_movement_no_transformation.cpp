@@ -8,6 +8,12 @@
 
 #include <filesystem>
 
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
+
 // Variables
 size_t WINDOW_WIDTH = 1000;
 size_t WINDOW_HEIGHT = 720;
@@ -56,29 +62,21 @@ const char *fragmentShaderSource =
 	"   "
     "}\0";
 
-unsigned int vboId, vaoId, eboId;
-unsigned int textures[2];
-unsigned int vertexShaderId, fragmentShaderId, shaderProgramId;
-
-float vertices[] = {
-    // positions          // colors           // texture coords
-     0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
-     0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
-    -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
-    -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
-};
-
 unsigned int indices[] = {
 	0, 1, 2,
 	2, 3, 0 // TODO play around with this
 };
+
+unsigned int vboId, vaoId, eboId;
+unsigned int textures[2];
+unsigned int vertexShaderId, fragmentShaderId, shaderProgramId;
 
 // Function Declarations.
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void render(GLFWwindow* window);
 unsigned int applyShader(GLenum shaderType, const char *source);
 void buildShaderProgram();
-void storeVertexDataOnGpu();
+void storeVertexDataOnGpu(float vertices[], unsigned int verticeListSize);
 void draw();
 void loadTexture(std::string path, unsigned int textureId, GLenum rgbTypeA, GLenum rgbTypeB);
 void debug(unsigned int shaderRef, size_t mode);
@@ -130,7 +128,10 @@ void render(GLFWwindow* window)
 	fragmentShaderId = applyShader(GL_FRAGMENT_SHADER, fragmentShaderSource);
 
 	buildShaderProgram();
-	storeVertexDataOnGpu();
+
+	float xPos = 0.5f;
+	float yPos = 0.5f;
+	float moveIncrement = -0.005f;
 
 	while(!glfwWindowShouldClose(window))
 	{
@@ -138,11 +139,28 @@ void render(GLFWwindow* window)
 		processInput(window);
 
 		// Rendering commands
+		float vertices[] = {
+			// positions          // colors           // texture coords
+			-xPos,  (yPos * 2), 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
+			-xPos,  yPos, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
+			-(xPos * 2), yPos, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
+			-(xPos * 2),  (yPos * 2), 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
+		};
+
+		storeVertexDataOnGpu(vertices, sizeof(vertices));
+
 		draw();
+
+		xPos += moveIncrement;
+		yPos += moveIncrement;
+		if ((yPos >= 0.5|| xPos >= 0.5) || (yPos <= -0.5 || xPos <= -0.5))
+		{
+			moveIncrement = -moveIncrement;
+		} 
 
 		// check and call events and swap the buffers
 		glfwSwapBuffers(window);
-		glfwPollEvents();    
+		glfwPollEvents();
 	}
 }
 
@@ -177,7 +195,7 @@ void draw()
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
-void storeVertexDataOnGpu()
+void storeVertexDataOnGpu(float vertices[], unsigned int verticeListSize)
 {
 	glGenVertexArrays(1, &vaoId);
 	glGenBuffers(1, &vboId);
@@ -186,7 +204,7 @@ void storeVertexDataOnGpu()
 	glBindVertexArray(vaoId);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboId);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, verticeListSize, vertices, GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
