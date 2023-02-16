@@ -38,8 +38,8 @@ The example above uses `float` as the type for each vertex attribute and hence a
 - Storing vertices [✅]
 - Compiling shaders [✅]
 - Drawing a triangle [✅]
-- Loading Textures [❌]
-- Applying Transformations [❌]
+- Loading Textures [✅]
+- Applying Transformations [✅]
 - Loading Object models [❌]
 
 **Stage #2**
