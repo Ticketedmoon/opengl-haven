@@ -273,8 +273,7 @@ void storeVertexDataOnGpu()
 	glUniform1i(glGetUniformLocation(shaderProgramId, "ourTexture"), 0); 
 	glUniform1i(glGetUniformLocation(shaderProgramId, "ourTexture2"), 1);
 
-    glm::mat4 projection    = glm::mat4(1.0f);
-    projection = glm::perspective(glm::radians(45.0f), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
     glUniformMatrix4fv(glGetUniformLocation(shaderProgramId, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
     glBindBuffer(GL_ARRAY_BUFFER, 0); 
