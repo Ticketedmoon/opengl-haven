@@ -11,6 +11,15 @@
 
 #include <filesystem>
 
+struct Joystick {
+    float leftX;
+    float leftY;
+    float L2;
+    float rightX;
+    float rightY;
+    float R2;
+};
+
 // Variables
 size_t WINDOW_WIDTH = 800;
 size_t WINDOW_HEIGHT = 600;
@@ -24,6 +33,8 @@ float yaw = -90.0f;
 bool firstMouse = true;
 
 float fov = 45.0f;
+
+Joystick joystick = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 
 glm::vec3 cubePositions[] = {
     glm::vec3( 0.0f,  0.0f,  0.0f), 
@@ -133,6 +144,7 @@ float lastFrame = 0.0f; // Time of last frame
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void joystick_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 void render(GLFWwindow* window);
@@ -214,6 +226,24 @@ void render(GLFWwindow* window)
 
 	while(!glfwWindowShouldClose(window))
 	{
+        int present = glfwJoystickPresent(GLFW_JOYSTICK_1);
+        //std::cout << "Joystick #1 Connection Status: " << (present == 1 ? "True" : "False") << std::endl;
+
+        if (present)
+        {
+            int axesCount;
+            const float *axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1, &axesCount);
+            // std::cout << "left X: " << axes[0] << std::endl;
+            // std::cout << "left Y: " << axes[1] << std::endl;
+            // std::cout << "L2: " << axes[2] << std::endl;
+
+            // std::cout << "right X: " << axes[3] << std::endl;
+            // std::cout << "right Y: " << axes[4] << std::endl;
+            // std::cout << "R2: " << axes[5] << std::endl;
+
+            joystick = {axes[0], axes[1], axes[2], axes[3], axes[4], axes[5]};
+        }
+
 		// Input
 		processInput(window);
 
@@ -250,23 +280,28 @@ void processInput(GLFWwindow *window)
         may return differently sized vectors based on the cameraFront variable. If we would not normalize the vector we would 
         move slow or fast based on the camera's orientation instead of at a consistent movement speed.
     */
-    const float cameraSpeed = 2.5f * deltaTime; // adjust accordingly
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS || joystick.leftY < -0.3)
     {
+        const float cameraSpeed = 2.5f * deltaTime; // adjust accordingly
         cameraPos += (cameraSpeed * cameraFront);
     }
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS || joystick.leftY > 0.3)
     {
+        const float cameraSpeed = 2.5f * deltaTime; // adjust accordingly
         cameraPos -= (cameraSpeed * cameraFront);
     }
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS || joystick.leftX < -0.3)
     {
+        const float cameraSpeed = 2.5f * deltaTime; // adjust accordingly
         cameraPos -= (glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed);
     }
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS || joystick.leftX > 0.3)
     {
+        const float cameraSpeed = 2.5f * deltaTime; // adjust accordingly
         cameraPos += (glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed);
     }
+
+    joystick_callback(window, joystick.rightX, joystick.rightY);
 }
 
 /*
@@ -277,6 +312,7 @@ void processInput(GLFWwindow *window)
 */
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
+    std::cout << xpos << ", " << ypos << std::endl;
     if (firstMouse)
     {
         lastMouseX = xpos;
@@ -325,6 +361,38 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     cameraFront = glm::normalize(direction);
 }
 
+void joystick_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    if (xpos > 0.3 || xpos < -0.3 || ypos > 0.3 || ypos < -0.3)
+    {
+        lastMouseX -= xpos;
+        lastMouseY += ypos;
+        std::cout << lastMouseX << ", " << lastMouseY << std::endl;
+        
+        const float sensitivity = 3.0f;
+        float xoffset = xpos * sensitivity;
+        float yoffset = ypos * sensitivity;
+
+        yaw   += xoffset;
+        pitch -= yoffset;
+
+        if (pitch > 89.0f)
+        {
+            pitch =  89.0f;
+        }
+        if (pitch < -89.0f)
+        {
+            pitch = -89.0f;
+        }
+
+        glm::vec3 direction;
+        direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+        direction.y = sin(glm::radians(pitch));
+        direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+        cameraFront = glm::normalize(direction);
+    }
+}
+
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     fov -= (float)yoffset;
@@ -341,7 +409,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 void draw()
 {
 	// Clear the screen with a colour
-	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+	glClearColor(0.0f, 1.0f, 0.25f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // also clear the depth buffer now!
 
 	glActiveTexture(GL_TEXTURE0);
