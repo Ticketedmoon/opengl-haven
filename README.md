@@ -23,6 +23,15 @@ The example above uses `float` as the type for each vertex attribute and hence a
 
 ---
 
+#### Look around
+Once we have our scene constructed and camera configured, we can look around the scene we have by changing the cameraFront vector based on the input of the mouse. However, changing the direction vector based on mouse rotations is a little complicated and requires some trigonometry.  
+
+See the below figure on **Euler Angles** to understand this, but it would be worth researching online how this works in 3D Graphics.  
+
+![Euler Angles](https://learnopengl.com/img/getting-started/camera_pitch_yaw_roll.png)
+
+---
+
 #### Progress Report - Showing what's been built (Screenshots/Videos):
 
 **The "simple" triangle** - 350 lines of openGL code + comments  
