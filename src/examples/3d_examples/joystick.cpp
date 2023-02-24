@@ -300,6 +300,25 @@ void processInput(GLFWwindow *window)
         const float cameraSpeed = 2.5f * deltaTime; // adjust accordingly
         cameraPos += (glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed);
     }
+    if (joystick.R2 > -0.3)
+    {
+        std::cout << fov << std::endl;
+        fov -= (joystick.R2 + 1);
+    }
+    if (joystick.L2 > -0.3)
+    {
+        std::cout << fov << std::endl;
+        fov += (joystick.L2);
+    }
+
+    if (fov < 1.0f)
+    {
+        fov = 1.0f;
+    }
+    if (fov > 45.0f)
+    {
+        fov = 45.0f; 
+    }
 
     joystick_callback(window, joystick.rightX, joystick.rightY);
 }
@@ -440,6 +459,9 @@ void draw()
 
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgramId, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
+    glm::mat4 projection = glm::perspective(glm::radians(fov), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgramId, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
 	glBindVertexArray(vaoId);
 	unsigned int totalCubes = sizeof(cubePositions)/sizeof(cubePositions[0]);
 	for (int i = 0; i < totalCubes; i++)
@@ -481,9 +503,6 @@ void storeVertexDataOnGpu()
 	glUseProgram(shaderProgramId);
 	glUniform1i(glGetUniformLocation(shaderProgramId, "ourTexture"), 0); 
 	glUniform1i(glGetUniformLocation(shaderProgramId, "ourTexture2"), 1);
-
-    glm::mat4 projection = glm::perspective(glm::radians(fov), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
-    glUniformMatrix4fv(glGetUniformLocation(shaderProgramId, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
     glBindBuffer(GL_ARRAY_BUFFER, 0); 
     glBindVertexArray(0); 
