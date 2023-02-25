@@ -71,7 +71,7 @@ const char *vertexShaderSource =
     "{\n"
     // Note: The order of matrix multiplication here is important.
     "   gl_Position = projection * view * model * vec4(aPos, 1.0); \n"
-    "	TexCoord = aTexCoord; \n"
+    //"	TexCoord = aTexCoord; \n"
     "}\0";
 
 const char *fragmentShaderSource = 
@@ -82,8 +82,9 @@ const char *fragmentShaderSource =
 	"uniform sampler2D ourTexture2; \n"
     "void main() \n"
     "{\n"
-	"    myOutput = mix(texture(ourTexture, TexCoord), texture(ourTexture2, TexCoord), 0.5); \n"
-	"   "
+	//"    myOutput = mix(texture(ourTexture, TexCoord), texture(ourTexture2, TexCoord), 0.5); \n"
+    " myOutput = vec4(1, 1, 0, 1); \n"
+    "   "
     "}\0";
 
 unsigned int vboId, vaoId;
@@ -117,7 +118,7 @@ float vertices[] = {
      1.5f, -0.5f, 0.5f,  1.0f, 0.0f,
      1.0f,  0.5f, 0.5f,  1.0f, 1.0f,
 
-     // Inner Left
+    // Wall Left
     0.5f,  1.5f, -0.5f,  1.0f, 1.0f,
     0.5f,  1.5f, 0.5f,  1.0f, 1.0f,
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -126,7 +127,7 @@ float vertices[] = {
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
     -0.5f, -0.5f, 0.5f,  0.0f, 0.0f,
 
-    // Inner Right
+    // Wall Right
     0.5f,  1.5f, -0.5f,  1.0f, 1.0f,
     0.5f,  1.5f, 0.5f,  1.0f, 1.0f,
     1.5f, -0.5f, -0.5f,  1.0f, 0.0f,
@@ -135,6 +136,14 @@ float vertices[] = {
     1.5f, -0.5f, 0.5f,  1.0f, 0.0f,
     1.5f, -0.5f, -0.5f,  1.0f, 0.0f,
 
+    // Inner wall Left
+    0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+    0.0f,  0.5f, -0.5f,  1.0f, 1.0f,
+    0.5f, -0.5f, 0.5f,  1.0f, 0.0f,
+
+    0.0f,  0.5f, -0.5f,  1.0f, 1.0f,
+    0.5f, -0.5f, 0.5f,  1.0f, 0.0f,
+    0.0f,  0.5f, 0.5f,  1.0f, 1.0f,
 };
 
 glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
@@ -266,15 +275,6 @@ void processInput(GLFWwindow *window)
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
 
-    /*
-        If we want to move forward or backwards we add or subtract the direction vector from the position vector
-        scaled by some speed value. If we want to move sideways we do a cross product to create a right vector 
-        and we move along the right vector accordingly. This creates the familiar strafe effect when using the camera.
-        
-        Note: that we normalize the resulting right vector. If we wouldn't normalize this vector, the resulting cross product 
-        may return differently sized vectors based on the cameraFront variable. If we would not normalize the vector we would 
-        move slow or fast based on the camera's orientation instead of at a consistent movement speed.
-    */
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS || joystick.leftY < -0.3)
     {
         const float cameraSpeed = 2.5f * deltaTime; // adjust accordingly
@@ -343,11 +343,6 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     lastMouseX = xpos;
     lastMouseY = ypos;
 
-    /*
-        Note that we multiply the offset values by a sensitivity value. 
-        If we omit this multiplication the mouse movement would be way too strong; 
-        fiddle around with the sensitivity value to your liking.
-    */
     const float sensitivity = 0.1f;
     xoffset *= sensitivity;
     yoffset *= sensitivity;
@@ -355,14 +350,6 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     yaw   += xoffset;
     pitch += yoffset;
 
-    /*
-        add some constraints to the camera so users won't be able to make weird camera movements 
-        (also causes a LookAt flip once direction vector is parallel to the world up direction). 
-        
-        The pitch needs to be constrained in such a way that users won't be able to look higher than 89 degrees 
-        (at 90 degrees we get the LookAt flip) and also not below -89 degrees. 
-        This ensures the user will be able to look up to the sky or below to his feet but not further.
-    */
     if (pitch > 89.0f)
     {
         pitch =  89.0f;
@@ -419,7 +406,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 void draw()
 {
 	// Clear the screen with a colour
-	glClearColor(0.0f, 1.0f, 0.25f, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.5f, 0.2f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // also clear the depth buffer now!
 
 	glActiveTexture(GL_TEXTURE0);
@@ -459,8 +446,8 @@ void draw()
 	{
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, cubePositions[i]);
-		float angle = 10.0f * (i + 1); 
-		//model = glm::rotate(model, glm::radians(angle) * (float)glfwGetTime(), glm::vec3(1.0f, 0.3f, 0.5f));
+		float angle = 45.0f * (i + 1); 
+		model = glm::rotate(model, glm::radians(angle) * (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
         
 		glUniformMatrix4fv(glGetUniformLocation(shaderProgramId, "model"), 1, GL_FALSE, glm::value_ptr(model));
     	glDrawArrays(GL_TRIANGLES, 0, 36);
