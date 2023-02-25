@@ -82,8 +82,8 @@ const char *fragmentShaderSource =
 	"uniform sampler2D ourTexture2; \n"
     "void main() \n"
     "{\n"
-	//"    myOutput = mix(texture(ourTexture, TexCoord), texture(ourTexture2, TexCoord), 0.5); \n"
-    " myOutput = vec4(1, 1, 0, 1); \n"
+	"    myOutput = mix(texture(ourTexture, TexCoord), texture(ourTexture2, TexCoord), 0.5); \n"
+    //" myOutput = vec4(1, 1, 0, 1); \n"
     "   "
     "}\0";
 
