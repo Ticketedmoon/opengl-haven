@@ -62,8 +62,6 @@ glm::vec3 cubePositions[] = {
 const char *vertexShaderSource = 
 	"#version 330 core \n"
 	"layout (location = 0) in vec3 aPos; \n"
-	"layout (location = 1) in vec2 aTexCoord; \n"
-	"out vec2 TexCoord; \n"
     "uniform mat4 model; \n"
     "uniform mat4 view; \n"
     "uniform mat4 projection; \n"
@@ -71,24 +69,17 @@ const char *vertexShaderSource =
     "{\n"
     // Note: The order of matrix multiplication here is important.
     "   gl_Position = projection * view * model * vec4(aPos, 1.0); \n"
-    //"	TexCoord = aTexCoord; \n"
     "}\0";
 
 const char *fragmentShaderSource = 
 	"#version 330 core \n"
     "out vec4 myOutput; \n"
-	"in vec2 TexCoord; \n"
-	"uniform sampler2D ourTexture; \n"
-	"uniform sampler2D ourTexture2; \n"
     "void main() \n"
     "{\n"
-	"    myOutput = mix(texture(ourTexture, TexCoord), texture(ourTexture2, TexCoord), 0.5); \n"
-    //" myOutput = vec4(1, 1, 0, 1); \n"
-    "   "
+    " myOutput = vec4(1, 1, 0, 1); \n"
     "}\0";
 
-unsigned int vboId, vaoId;
-unsigned int textures[2];
+unsigned int vboId, vaoId, eboId;
 unsigned int vertexShaderId, fragmentShaderId, shaderProgramId;
 
 float vertices[] = {
@@ -106,44 +97,51 @@ float vertices[] = {
      1.0f,  0.5f, -0.5f,  1.0f, 1.0f,
 
     // Front
-    -0.5f, -0.5f, 0.5f,  0.0f, 0.0f,
-     0.5f, -0.5f, 0.5f,  1.0f, 0.0f,
-     0.0f,  0.5f, 0.5f,  1.0f, 1.0f,
+    -0.5f, -0.5f, 0.0f,  0.0f, 0.0f,
+     0.5f, -0.5f, 0.0f,  1.0f, 0.0f,
+     0.0f,  0.5f, 0.0f,  1.0f, 1.0f,
 
-     0.0f,  0.5f, 0.5f,  0.0f, 0.0f,
-     1.0f,  0.5f, 0.5f,  1.0f, 0.0f,
-     0.5f,  1.5f, 0.5f,  1.0f, 1.0f,
+     0.0f,  0.5f, 0.0f,  0.0f, 0.0f,
+     1.0f,  0.5f, 0.0f,  1.0f, 0.0f,
+     0.5f,  1.5f, 0.0f,  1.0f, 1.0f,
 
-     0.5f, -0.5f, 0.5f,  0.0f, 0.0f,
-     1.5f, -0.5f, 0.5f,  1.0f, 0.0f,
-     1.0f,  0.5f, 0.5f,  1.0f, 1.0f,
+     0.5f, -0.5f, 0.0f,  0.0f, 0.0f,
+     1.5f, -0.5f, 0.0f,  1.0f, 0.0f,
+     1.0f,  0.5f, 0.0f,  1.0f, 1.0f,
+};
 
-    // Wall Left
-    0.5f,  1.5f, -0.5f,  1.0f, 1.0f,
-    0.5f,  1.5f, 0.5f,  1.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+int indices[] = {
+    // back
 
-    0.5f,  1.5f, 0.5f,  1.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-    -0.5f, -0.5f, 0.5f,  0.0f, 0.0f,
+    // left, right, top
+    0, 1, 2, // left
+    3, 4, 5, // top
+    6, 7, 8, // right
 
-    // Wall Right
-    0.5f,  1.5f, -0.5f,  1.0f, 1.0f,
-    0.5f,  1.5f, 0.5f,  1.0f, 1.0f,
-    1.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+    // front
+    // left, right, top
+    9, 10, 11, // left
+    12, 13, 14, // top
+    15, 16, 17, // right
 
-    0.5f,  1.5f, 0.5f,  1.0f, 1.0f,
-    1.5f, -0.5f, 0.5f,  1.0f, 0.0f,
-    1.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-
-    // Inner wall Left
-    0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-    0.0f,  0.5f, -0.5f,  1.0f, 1.0f,
-    0.5f, -0.5f, 0.5f,  1.0f, 0.0f,
-
-    0.0f,  0.5f, -0.5f,  1.0f, 1.0f,
-    0.5f, -0.5f, 0.5f,  1.0f, 0.0f,
-    0.0f,  0.5f, 0.5f,  1.0f, 1.0f,
+    // left wall
+    5, 14, 0,
+    0, 9, 14,
+    // right wall
+    5, 14, 7,
+    7, 16, 14,
+    // floor
+    0, 9, 7,
+    7, 9, 16,
+    // inner left wall
+    1, 3, 11,
+    1, 10, 11,
+    // inner right wall
+    6, 8, 15,
+    8, 15, 17,
+    // ceiling wall
+    3, 4, 12,
+    4, 12, 13
 };
 
 glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
@@ -152,6 +150,8 @@ glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 
 float deltaTime = 0.0f;	// Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
+
+unsigned int TOTAL_VERTICES = 54;
 
 // Function Declarations.
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -165,12 +165,11 @@ unsigned int applyShader(GLenum shaderType, const char *source);
 void buildShaderProgram();
 void storeVertexDataOnGpu();
 void draw();
-void loadTexture(std::string path, unsigned int textureId, GLenum rgbTypeA, GLenum rgbTypeB);
 void debug(unsigned int shaderRef, size_t mode);
 
 int main() 
 {
-    std::cout << "Hello, GLFW!" << std::endl;
+    std::cout << "Hello, Triforce!" << std::endl;
 
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -300,14 +299,12 @@ void processInput(GLFWwindow *window)
     {
         if (joystick.R2 > -0.3)
         {
-            std::cout << fov << std::endl;
             fov -= (joystick.R2 + 1);
         }
         if (joystick.L2 > -0.3)
         {
-            std::cout << fov << std::endl;
             fov += (joystick.L2);
-    }
+        }
     }
 
     if (fov < 1.0f)
@@ -330,7 +327,6 @@ void processInput(GLFWwindow *window)
 */
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
-    std::cout << xpos << ", " << ypos << std::endl;
     if (firstMouse)
     {
         lastMouseX = xpos;
@@ -372,7 +368,6 @@ void joystick_callback(GLFWwindow* window, double xpos, double ypos)
     {
         lastMouseX -= xpos;
         lastMouseY += ypos;
-        std::cout << lastMouseX << ", " << lastMouseY << std::endl;
         
         const float sensitivity = 3.0f;
         float xoffset = xpos * sensitivity;
@@ -409,11 +404,6 @@ void draw()
 	glClearColor(0.0f, 0.0f, 0.5f, 0.2f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // also clear the depth buffer now!
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, textures[0]);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, textures[1]);
-
 	// Every shader and rendering call after the `glUseProgram` call will now use this program object (and thus the shaders).
 	glUseProgram(shaderProgramId);
 
@@ -442,15 +432,15 @@ void draw()
 
 	glBindVertexArray(vaoId);
 	unsigned int totalCubes = sizeof(cubePositions)/sizeof(cubePositions[0]);
-	for (int i = 0; i < totalCubes; i++)
+	for (int i = 1; i <= totalCubes; i++)
 	{
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, cubePositions[i]);
-		float angle = 45.0f * (i + 1); 
+		float angle = 45.0f * i; 
 		model = glm::rotate(model, glm::radians(angle) * (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
         
 		glUniformMatrix4fv(glGetUniformLocation(shaderProgramId, "model"), 1, GL_FALSE, glm::value_ptr(model));
-    	glDrawArrays(GL_TRIANGLES, 0, 36);
+	    glDrawElements(GL_TRIANGLES, TOTAL_VERTICES, GL_UNSIGNED_INT, 0);
 	}
 }
 
@@ -458,30 +448,21 @@ void storeVertexDataOnGpu()
 {
 	glGenVertexArrays(1, &vaoId);
 	glGenBuffers(1, &vboId);
+	glGenBuffers(1, &eboId);
 
 	glBindVertexArray(vaoId);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboId);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
-
-	// load and create a texture 
-    glGenTextures(2, textures);
-	// Active which texture we want
-
-	loadTexture("resources/textures/container.jpg", 0, GL_RGB, GL_RGB);
-	loadTexture("resources/textures/container_2.png", 1, GL_RGBA, GL_RGBA);
-
-	// Super Important to set up uniform locations for shaders to have visibility of our textures.
-	// Note: It's required to use the shaderProgram before assigning these uniform locations.
-	glUseProgram(shaderProgramId);
-	glUniform1i(glGetUniformLocation(shaderProgramId, "ourTexture"), 0); 
-	glUniform1i(glGetUniformLocation(shaderProgramId, "ourTexture2"), 1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0); 
     glBindVertexArray(0); 
@@ -511,40 +492,6 @@ void buildShaderProgram()
 	glDeleteShader(fragmentShaderId); 
 
 	debug(shaderProgramId, 0);
-}
-
-void loadTexture(std::string path, unsigned int textureId, GLenum rgbTypeA, GLenum rgbTypeB)
-{
-    glBindTexture(GL_TEXTURE_2D, textures[textureId]); // all upcoming GL_TEXTURE_2D operations now have an effect on this texture object
-
-    // set the texture wrapping parameters
-	
-	// These two lines are only associated with GL_CLAMP_TO_BORDER 
-	// float borderColor[] = { 1.0f, 1.0f, 0.0f, 1.0f };
-	// glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor); 
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // load image, create texture and generate mipmaps
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
-
-    // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
-    unsigned char *data = stbi_load(std::filesystem::path(path).c_str(), &width, &height, &nrChannels, 0);
-    if (data)
-    {
-        glTexImage2D(GL_TEXTURE_2D, 0, rgbTypeA, width, height, 0, rgbTypeB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    else
-    {
-        std::cout << "Failed to load texture" << std::endl;
-    }
-    stbi_image_free(data);
 }
 
 void debug(unsigned int shaderRef, size_t mode)
