@@ -431,17 +431,13 @@ void draw()
     glUniformMatrix4fv(glGetUniformLocation(shaderProgramId, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
 	glBindVertexArray(vaoId);
-	unsigned int totalCubes = sizeof(cubePositions)/sizeof(cubePositions[0]);
-	for (int i = 1; i <= totalCubes; i++)
-	{
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, cubePositions[i]);
-		float angle = 45.0f * i; 
-		model = glm::rotate(model, glm::radians(angle) * (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
-        
-		glUniformMatrix4fv(glGetUniformLocation(shaderProgramId, "model"), 1, GL_FALSE, glm::value_ptr(model));
-	    glDrawElements(GL_TRIANGLES, TOTAL_VERTICES, GL_UNSIGNED_INT, 0);
-	}
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, cubePositions[0]);
+    float angle = 45.0f * (1.5f); 
+    model = glm::rotate(model, glm::radians(angle) * (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+    
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgramId, "model"), 1, GL_FALSE, glm::value_ptr(model));
+    glDrawElements(GL_TRIANGLES, TOTAL_VERTICES, GL_UNSIGNED_INT, 0);
 }
 
 void storeVertexDataOnGpu()
