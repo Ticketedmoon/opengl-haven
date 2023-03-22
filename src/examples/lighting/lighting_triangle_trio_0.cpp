@@ -39,26 +39,8 @@ Joystick joystick = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 
 glm::vec3 cubePositions[] = {
     glm::vec3( 0.0f,  0.0f,  0.0f)
-    // glm::vec3( 2.0f,  5.0f, -15.0f), 
-    // glm::vec3(-1.5f, -2.2f, -2.5f),  
-    // glm::vec3(-3.8f, -2.0f, -12.3f),  
-    // glm::vec3( 2.4f, -0.4f, -3.5f),  
-    // glm::vec3(-1.7f,  3.0f, -7.5f),  
-    // glm::vec3( 1.3f, -2.0f, -2.5f),  
-    // glm::vec3( 1.5f,  2.0f, -2.5f), 
-    // glm::vec3( 1.5f,  0.2f, -1.5f), 
-    // glm::vec3(-1.3f,  1.0f, -1.5f)  
 };
 
-/* Vertex shader
-   Version at the top must match openGL version + we are using `core` profile.
-
-   To set the output of the vertex shader we have to assign the position data 
-   to the predefined gl_Position variable which is a `vec4` behind the scenes
-   The last parameter is the width which we will default to 1 for each vector.
-   TODO: Experiment with the parameters here.
-   TODO: Move these to own shader `glsl` files.
-*/
 const char *vertexShaderSource = 
 	"#version 330 core \n"
 	"layout (location = 0) in vec3 aPos; \n"
@@ -68,7 +50,7 @@ const char *vertexShaderSource =
     "void main() \n"
     "{\n"
     // Note: The order of matrix multiplication here is important.
-    "   gl_Position = projection * view * model * vec4(aPos, 1.0); \n"
+    "    gl_Position = projection * view * model * vec4(aPos, 1.0); \n"
     "}\0";
 
 const char *fragmentShaderSource = 
@@ -76,7 +58,7 @@ const char *fragmentShaderSource =
     "out vec4 myOutput; \n"
     "void main() \n"
     "{\n"
-    " myOutput = vec4(1, 1, 0, 1); \n"
+    "    myOutput = vec4(1, 1, 0, 1); \n"
     "}\0";
 
 unsigned int vboId, vaoId, eboId;
@@ -194,28 +176,11 @@ int main()
 		return -1;
 	}  
 
-	// Viewport dictates how we want to display the data and coordinates with respect to the window
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback); 
-
-    /* 
-        Tell GLFW that it should hide the cursor but still capture it. 
-        Capturing a cursor means that, once the application has focus, the mouse cursor stays within the center of the window.
-        Wherever we move the mouse it won't be visible and it should not leave the window. This is perfect for an FPS camera system.
-    */
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-    /* 
-       Enable depth buffer
-       The depth is stored within each fragment (as the fragment's z value) and whenever the fragment wants to output its color, 
-       OpenGL compares its depth values with the z-buffer. If the current fragment is behind the other fragment it is discarded, 
-       otherwise overwritten. This process is called depth testing and is done automatically by OpenGL.
-    */
     glEnable(GL_DEPTH_TEST);
 
-    // Register mouse callback - Each time mouse moves this will be called with the (x,y) coords of the mouse.
     glfwSetCursorPosCallback(window, mouse_callback); 
-
-    // Scroll callback (change fov of perspective project based on y coordinate)
     glfwSetScrollCallback(window, scroll_callback); 
 
 	render(window);
@@ -247,13 +212,10 @@ void render(GLFWwindow* window)
             joystick = {axes[0], axes[1], axes[2], axes[3], axes[4], axes[5]};
         }
 
-		// Input
 		processInput(window);
 
-		// Rendering commands
 		draw();
 
-		// check and call events and swap the buffers
 		glfwSwapBuffers(window);
 		glfwPollEvents();    
 	}
@@ -319,12 +281,6 @@ void processInput(GLFWwindow *window)
     joystick_callback(window, joystick.rightX, joystick.rightY);
 }
 
-/*
-    1. Calculate the mouse's offset since the last frame.
-    2. Add the offset values to the camera's yaw and pitch values.
-    3. Add some constraints to the minimum/maximum pitch values.
-    4. Calculate the direction vector.
-*/
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
     if (firstMouse)
@@ -400,26 +356,16 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 void draw()
 {
-	// Clear the screen with a colour
-	// glClearColor(0.0f, 0.0f, 0.5f, 0.2f);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // also clear the depth buffer now!
 
-	// Every shader and rendering call after the `glUseProgram` call will now use this program object (and thus the shaders).
 	glUseProgram(shaderProgramId);
 
-    // 3d
     glm::mat4 view = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
     float radius = 30.0f;
     float camX = static_cast<float>(sin(glfwGetTime()) * radius);
     float camZ = static_cast<float>(cos(glfwGetTime()) * radius);
 
-    /*
-    view = glm::lookAt(
-        glm::vec3(0.0f, 0.0f, 1.5f), // Camera pos
-        glm::vec3(0.0f, 0.0f, 0.0f), // Target pos
-        glm::vec3(1.0f, 1.0f, 10.0f)); // Up vector (World-Space)
-    */
     view = glm::lookAt(cameraPos, // Camera Pos
                        cameraPos + cameraFront, // Target Pos
                        cameraUp); // Up Vector
@@ -458,9 +404,6 @@ void storeVertexDataOnGpu()
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
     glBindBuffer(GL_ARRAY_BUFFER, 0); 
     glBindVertexArray(0); 
 }
@@ -476,15 +419,12 @@ unsigned int applyShader(GLenum shaderType, const char *source)
 
 void buildShaderProgram()
 {
-	// Same `id` reference patern as with the complation of the Vertex and Fragment shaders. 
 	shaderProgramId = glCreateProgram();
 
-	// Self-explanatory, link the shaders to the `shaderProgram`
 	glAttachShader(shaderProgramId, vertexShaderId);
 	glAttachShader(shaderProgramId, fragmentShaderId);
 	glLinkProgram(shaderProgramId);
 
-	// Delete the shader objects once we've linked them into the program object; we no longer need them anymore.
 	glDeleteShader(vertexShaderId);
 	glDeleteShader(fragmentShaderId); 
 
@@ -515,7 +455,8 @@ void debug(unsigned int shaderRef, size_t mode)
 			}
 			std::cout << "ERROR::SHADER::" << shaderName << "::COMPILATION_FAILED\n" << infoLog << std::endl;
 		}
-	} else if (mode == 0)
+	} 
+    else if (mode == 0)
 	{
 		glGetProgramiv(shaderRef, GL_LINK_STATUS, &success);
 		if(!success)
