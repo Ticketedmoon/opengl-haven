@@ -32,6 +32,20 @@ See the below figure on **Euler Angles** to understand this, but it would be wor
 
 ---
 
+#### Lighting
+The Phong lighting model.  
+The major building blocks of the Phong lighting model consist of 3 components: ambient, diffuse and specular lighting.  
+Below you can see what these lighting components look like on their own and combined:  
+
+![Phong Lighting Model](https://learnopengl.com/img/lighting/basic_lighting_phong.png)
+
+- Ambient lighting: even when it is dark there is usually still some light somewhere in the world (the moon, a distant light) so 
+objects are almost never completely dark. To simulate this we use an ambient lighting constant that always gives the object some color.
+- Diffuse lighting: simulates the directional impact a light object has on an object. This is the most visually significant component of the lighting model. 
+The more a part of an object faces the light source, the brighter it becomes.
+- Specular lighting: simulates the bright spot of a light that appears on shiny objects. 
+Specular highlights are more inclined to the color of the light than the color of the object.
+
 #### Progress Report - Showing what's been built (Screenshots/Videos):
 
 **The "simple" triangle** - 350 lines of openGL code + comments  
