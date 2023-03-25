@@ -408,9 +408,9 @@ void draw()
 
 void storeVertexDataOnGpu()
 {
-	glGenVertexArrays(1, &cubeVaoId);
 	glGenBuffers(1, &vboId);
 
+	glGenVertexArrays(1, &cubeVaoId);
 	glBindBuffer(GL_ARRAY_BUFFER, vboId);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 	glBindVertexArray(cubeVaoId);
@@ -434,9 +434,14 @@ void storeVertexDataOnGpu()
 	glUniform1i(glGetUniformLocation(cubeShaderProgramId, "ourTexture"), 0); 
 	glUniform1i(glGetUniformLocation(cubeShaderProgramId, "ourTexture2"), 1);
 
+    /*
+     * Create separate VAO for the light source.
+     * A light source is simply another object in the scene that casts light on other objects from a location.
+     */
 	glGenVertexArrays(1, &lightVaoId);
-	glBindVertexArray(lightVaoId);
 	glBindBuffer(GL_ARRAY_BUFFER, vboId);
+    // No need to add bufferData here, we can reuse the buffer data already present from the call earlier.
+	glBindVertexArray(lightVaoId);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
