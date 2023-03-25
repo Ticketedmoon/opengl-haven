@@ -12,24 +12,6 @@
 
 #include <filesystem>
 
-// Variables
-size_t WINDOW_WIDTH = 800;
-size_t WINDOW_HEIGHT = 600;
-
-float lastMouseX = WINDOW_WIDTH / 2;
-float lastMouseY = WINDOW_HEIGHT / 2;
-
-float pitch = 0.0f;
-float yaw = -90.0f;
-
-bool firstMouse = true;
-
-float fov = 45.0f;
-
-glm::vec3 cubePositions[] = {
-    glm::vec3( 0.0f,  0.0f,  0.0f), 
-};
-
 const char *vertexShaderSource = 
 	"#version 330 core \n"
 	"layout (location = 0) in vec3 aPos; \n"
@@ -79,7 +61,7 @@ const char *lightSourceFragmentShader =
     "}\0";
 
 uint32_t vboId;
-uint32_t vaoId[2];
+uint32_t cubeVaoId, lightVaoId;
 uint32_t textures[2];
 uint32_t vertexShaderId, fragmentShaderId, lightSourceVertexShaderId, lightSourceFragmentShaderId;
 uint32_t cubeShaderProgramId, lightSourceShaderProgramId;
@@ -128,10 +110,26 @@ float vertices[] = {
     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 };
 
+
+size_t WINDOW_WIDTH = 800;
+size_t WINDOW_HEIGHT = 600;
+
+float lastMouseX = WINDOW_WIDTH / 2;
+float lastMouseY = WINDOW_HEIGHT / 2;
+
+float pitch = 0.0f;
+float yaw = -90.0f;
+
+bool firstMouse = true;
+
+float fov = 45.0f;
+
+
 glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 
+glm::vec3 cubePos(0.0f, 0.0f, 0.0f);
 glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
 float deltaTime = 0.0f;	// Time between current frame and last frame
@@ -204,7 +202,8 @@ int main()
 
 	render(window);
 
-	glDeleteVertexArrays(2, vaoId);
+	glDeleteVertexArrays(1, &cubeVaoId);
+	glDeleteVertexArrays(1, &lightVaoId);
     glDeleteBuffers(1, &vboId);
     glDeleteProgram(cubeShaderProgramId);
     glDeleteProgram(lightSourceShaderProgramId);
@@ -217,7 +216,8 @@ void render(GLFWwindow* window)
 {
 	vertexShaderId = applyShader(GL_VERTEX_SHADER, vertexShaderSource);
 	fragmentShaderId = applyShader(GL_FRAGMENT_SHADER, fragmentShaderSource);
-	lightSourceVertexShaderId = applyShader(GL_FRAGMENT_SHADER, lightSourceVertexShader);
+
+	lightSourceVertexShaderId = applyShader(GL_VERTEX_SHADER, lightSourceVertexShader);
 	lightSourceFragmentShaderId = applyShader(GL_FRAGMENT_SHADER, lightSourceFragmentShader);
 
 	cubeShaderProgramId = buildShaderProgram(vertexShaderId, fragmentShaderId);
@@ -382,41 +382,39 @@ void draw()
     view = glm::translate(view, glm::vec3(0.0f, 0.0f, -8.0f));
 	glUniformMatrix4fv(glGetUniformLocation(cubeShaderProgramId, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
-	uint32_t totalCubes = sizeof(cubePositions)/sizeof(cubePositions[0]);
-	for (int i = 0; i < totalCubes; i++)
-	{
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, cubePositions[i]);
-		float angle = 10.0f * (i + 1); 
-		model = glm::rotate(model, glm::radians(angle) * (float)glfwGetTime(), glm::vec3(1.0f, 0.3f, 0.5f));
-		glUniformMatrix4fv(glGetUniformLocation(cubeShaderProgramId, "model"), 1, GL_FALSE, glm::value_ptr(model));
-    	glDrawArrays(GL_TRIANGLES, 0, 36);
-	}
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, cubePos);
+    //float angle = 10.0f; 
+    //model = glm::rotate(model, glm::radians(angle) * (float)glfwGetTime(), glm::vec3(1.0f, 0.3f, 0.5f));
+    glUniformMatrix4fv(glGetUniformLocation(cubeShaderProgramId, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+    glBindVertexArray(cubeVaoId);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
 
     // Light source
     glUseProgram(lightSourceShaderProgramId);
     glUniformMatrix4fv(glGetUniformLocation(lightSourceShaderProgramId, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 	glUniformMatrix4fv(glGetUniformLocation(lightSourceShaderProgramId, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
-    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::mat4(1.0f);
     model = glm::translate(model, lightPos);
     model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
 	glUniformMatrix4fv(glGetUniformLocation(lightSourceShaderProgramId, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
-    glBindVertexArray(vaoId[1]);
-    //glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(lightVaoId);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
 
 }
 
 void storeVertexDataOnGpu()
 {
-	glGenVertexArrays(2, vaoId);
+	glGenVertexArrays(1, &cubeVaoId);
 	glGenBuffers(1, &vboId);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboId);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBindVertexArray(cubeVaoId);
 
-	glBindVertexArray(vaoId[0]);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
@@ -425,8 +423,8 @@ void storeVertexDataOnGpu()
 
 	// load and create a texture 
     glGenTextures(2, textures);
-	// Active which texture we want
 
+	// Active which texture we want
 	loadTexture("resources/textures/container.jpg", 0, GL_RGB, GL_RGB);
 	loadTexture("resources/textures/container_2.png", 1, GL_RGBA, GL_RGBA);
 
@@ -436,7 +434,8 @@ void storeVertexDataOnGpu()
 	glUniform1i(glGetUniformLocation(cubeShaderProgramId, "ourTexture"), 0); 
 	glUniform1i(glGetUniformLocation(cubeShaderProgramId, "ourTexture2"), 1);
 
-	glBindVertexArray(vaoId[1]);
+	glGenVertexArrays(1, &lightVaoId);
+	glBindVertexArray(lightVaoId);
 	glBindBuffer(GL_ARRAY_BUFFER, vboId);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
