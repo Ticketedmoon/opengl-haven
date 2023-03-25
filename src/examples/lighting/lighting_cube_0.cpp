@@ -61,7 +61,7 @@ const char *lightSourceFragmentShader =
     "}\0";
 
 uint32_t vboId;
-uint32_t cubeVaoId, lightVaoId;
+uint32_t cubeVaoIds[2];
 uint32_t textures[2];
 uint32_t vertexShaderId, fragmentShaderId, lightSourceVertexShaderId, lightSourceFragmentShaderId;
 uint32_t cubeShaderProgramId, lightSourceShaderProgramId;
@@ -202,8 +202,7 @@ int main()
 
 	render(window);
 
-	glDeleteVertexArrays(1, &cubeVaoId);
-	glDeleteVertexArrays(1, &lightVaoId);
+	glDeleteVertexArrays(2, cubeVaoIds);
     glDeleteBuffers(1, &vboId);
     glDeleteProgram(cubeShaderProgramId);
     glDeleteProgram(lightSourceShaderProgramId);
@@ -388,7 +387,7 @@ void draw()
     //model = glm::rotate(model, glm::radians(angle) * (float)glfwGetTime(), glm::vec3(1.0f, 0.3f, 0.5f));
     glUniformMatrix4fv(glGetUniformLocation(cubeShaderProgramId, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
-    glBindVertexArray(cubeVaoId);
+    glBindVertexArray(cubeVaoIds[0]);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
     // Light source
@@ -401,7 +400,7 @@ void draw()
     model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
 	glUniformMatrix4fv(glGetUniformLocation(lightSourceShaderProgramId, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
-    glBindVertexArray(lightVaoId);
+    glBindVertexArray(cubeVaoIds[1]);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
 }
@@ -410,10 +409,10 @@ void storeVertexDataOnGpu()
 {
 	glGenBuffers(1, &vboId);
 
-	glGenVertexArrays(1, &cubeVaoId);
+	glGenVertexArrays(2, &cubeVaoIds[0]);
 	glBindBuffer(GL_ARRAY_BUFFER, vboId);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	glBindVertexArray(cubeVaoId);
+	glBindVertexArray(cubeVaoIds[0]);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
@@ -438,10 +437,10 @@ void storeVertexDataOnGpu()
      * Create separate VAO for the light source.
      * A light source is simply another object in the scene that casts light on other objects from a location.
      */
-	glGenVertexArrays(1, &lightVaoId);
+	glGenVertexArrays(1, &cubeVaoIds[1]);
 	glBindBuffer(GL_ARRAY_BUFFER, vboId);
     // No need to add bufferData here, we can reuse the buffer data already present from the call earlier.
-	glBindVertexArray(lightVaoId);
+	glBindVertexArray(cubeVaoIds[1]);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
