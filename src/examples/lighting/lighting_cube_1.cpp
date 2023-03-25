@@ -1,3 +1,7 @@
+/*
+ * This file has ambient lighting applied and can be adjusted using the UP/DOWN arrow keys.
+ */
+
 #include <cstdint>
 #include <glad/glad.h> 
 #include <GLFW/glfw3.h>
@@ -34,10 +38,15 @@ const char *fragmentShaderSource =
 	"uniform sampler2D ourTexture; \n"
 	"uniform sampler2D ourTexture2; \n"
 	"uniform vec3 lightColour; \n"
+	"uniform float ambientStrength; \n"
     "void main() \n"
     "{\n"
+    "    vec3 objectColour = vec3(1.0f, 0.5f, 0.31f);                                \n"
+    "    vec3 lightingWithAmbient = lightColour * ambientStrength;                         \n"
+    "    vec3 result = objectColour * lightingWithAmbient;                           \n"
+    "    myOutput = vec4(result, 1.0);                          \n"
 	//"    myOutput = vec4(lightColour * mix(texture(ourTexture, TexCoord), texture(ourTexture2, TexCoord), 0.5)); \n"
-	"    myOutput = mix(texture(ourTexture, TexCoord), texture(ourTexture2, TexCoord), 0.5); \n"
+	//"    myOutput = mix(texture(ourTexture, TexCoord), texture(ourTexture2, TexCoord), 0.5); \n"
     "}\0";
 
 const char *lightSourceVertexShader = 
@@ -124,13 +133,14 @@ bool firstMouse = true;
 
 float fov = 45.0f;
 
-
 glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 
 glm::vec3 cubePos(0.0f, 0.0f, 0.0f);
 glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+
+static float ambientStrength = 0.5f;
 
 float deltaTime = 0.0f;	// Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
@@ -248,6 +258,21 @@ void processInput(GLFWwindow *window)
 		glfwSetWindowShouldClose(window, true);
 	}
 
+
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+        if (ambientStrength < 1.0f)
+        {
+            ambientStrength += 0.025;
+        }
+	}
+
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        if (ambientStrength > 0.0f)
+        {
+            ambientStrength -= 0.025;
+        }
+	}
+
     float currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
@@ -363,6 +388,7 @@ void draw()
 	// Every shader and rendering call after the `glUseProgram` call will now use this program object (and thus the shaders).
 	glUseProgram(cubeShaderProgramId);
 
+    glUniform1f(glGetUniformLocation(cubeShaderProgramId, "ambientStrength"), ambientStrength);
     glUniform3f(glGetUniformLocation(cubeShaderProgramId, "lightColour"), 1.0f, 1.0f, 1.0f);
 
     // 3d

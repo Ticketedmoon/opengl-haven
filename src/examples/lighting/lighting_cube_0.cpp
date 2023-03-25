@@ -1,3 +1,7 @@
+/*
+ * This file has no lighting effects and just is about introducing a light source object into the scene.
+ */
+
 #include <cstdint>
 #include <glad/glad.h> 
 #include <GLFW/glfw3.h>
