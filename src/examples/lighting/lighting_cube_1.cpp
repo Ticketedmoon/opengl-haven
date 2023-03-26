@@ -41,7 +41,7 @@ const char *fragmentShaderSource =
 	"uniform float ambientStrength; \n"
     "void main() \n"
     "{\n"
-    "    vec3 objectColour = vec3(1.0f, 0.5f, 0.31f);                                \n"
+    "    vec3 objectColour = vec3(1.0f, 0.75f, 0.0f);                                \n"
     "    vec3 lightingWithAmbient = lightColour * ambientStrength;                         \n"
     "    vec3 result = objectColour * lightingWithAmbient;                           \n"
     "    myOutput = vec4(result, 1.0);                          \n"
