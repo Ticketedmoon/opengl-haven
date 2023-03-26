@@ -1,5 +1,5 @@
 /*
- * This file has ambient + diffuse lighting applied and can be adjusted using the UP/DOWN arrow keys.
+ * This file has ambient + diffuse + specular lighting applied and can be adjusted using the UP/DOWN arrow keys.
  */
 
 #include <cstdint>
@@ -16,11 +16,6 @@
 
 #include <filesystem>
 
-/*
- * Inversing matrices is a costly operation for shaders, so wherever possible try to avoid doing inverse operations since 
- * they have to be done on each vertex of your scene. For learning purposes this is fine, but for an efficient application you'll likely 
- * want to calculate the normal matrix on the CPU and send it to the shaders via a uniform before drawing (just like the model matrix).
- */
 const char *vertexShaderSource = 
 	"#version 330 core \n"
 	"layout (location = 0) in vec3 aPos; \n"
@@ -59,6 +54,13 @@ const char *vertexShaderSource =
  * and we end up with a negative diffuse component. For that reason we use the max function that returns the highest of both its 
  * parameters to make sure the diffuse component (and thus the colors) never become negative.
  */
+
+/*
+ * `float spec = pow(max(dot(cameraDirection, reflectDir), 0.0), 32)`
+ *
+ * We calculate the dot product between the view direction and the reflect direction (and make sure it's not negative) and 
+ * then raise it to the power of 32. This 32 value is the shininess value of the highligh
+ */
 const char *fragmentShaderSource = 
 	"#version 330 core \n"
     "out vec4 myOutput; \n"
@@ -70,17 +72,25 @@ const char *fragmentShaderSource =
 	"uniform vec3 lightColour; \n"
 	"uniform vec3 lightPos; \n"
 	"uniform float ambientStrength; \n"
+	"uniform vec3 cameraPos; \n"
     "void main() \n"
     "{\n"
     "    vec3 objectColour = vec3(0.0f, 0.75f, 0.70f);                                \n"
-    "    vec3 lightingWithAmbient = lightColour * ambientStrength;                         \n"
+    "    vec3 ambient = lightColour * ambientStrength;                         \n"
 
     "    vec3 norm = normalize(Normal);                           \n"
     "    vec3 lightDir = normalize(lightPos - FragmentPos);                           \n"
     "    float diff = max(dot(norm, lightDir), 0.0);                           \n"
-    "    vec3 lightingWithDiffuse = diff * lightColour;                           \n"
+    "    vec3 diffuse = diff * lightColour;                           \n"
 
-    "    vec3 result = objectColour * (lightingWithAmbient + lightingWithDiffuse);                           \n"
+    "    float specularStrength = 0.5;                           \n"
+    "    vec3 cameraDirection = normalize(cameraPos - FragmentPos);                           \n"
+    "    vec3 reflectDir = reflect(-lightDir, norm);                           \n"
+
+    "    float spec = pow(max(dot(cameraDirection, reflectDir), 0.0), 32);                 \n"
+    "    vec3 specular = specularStrength * spec * lightColour;                            \n"
+
+    "    vec3 result = objectColour * (ambient + diffuse + specular);                           \n"
     "    myOutput = vec4(result, 1.0);                          \n"
 	//"    myOutput = vec4(lightColour * mix(texture(ourTexture, TexCoord), texture(ourTexture2, TexCoord), 0.5)); \n"
 	//"    myOutput = mix(texture(ourTexture, TexCoord), texture(ourTexture2, TexCoord), 0.5); \n"
@@ -429,6 +439,7 @@ void draw()
     glUniform3f(glGetUniformLocation(cubeShaderProgramId, "lightColour"), 1.0f, 1.0f, 1.0f);
     // Note: Can use 3fv uniform to pass glm::vec* objects, but require value_ptr call
     glUniform3fv(glGetUniformLocation(cubeShaderProgramId, "lightPos"), 1, glm::value_ptr(lightPos));
+    glUniform3fv(glGetUniformLocation(cubeShaderProgramId, "cameraPos"), 1, glm::value_ptr(cameraPos));
 
     // 3d
     glm::mat4 projection = glm::perspective(glm::radians(fov), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
@@ -448,8 +459,8 @@ void draw()
 
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, cubePos);
-    float angle = 30.0f; 
-    model = glm::rotate(model, glm::radians(angle) * (float)glfwGetTime(), glm::vec3(1.0f, 0.3f, 0.5f));
+    //float angle = 30.0f; 
+    //model = glm::rotate(model, glm::radians(angle) * (float)glfwGetTime(), glm::vec3(1.0f, 0.3f, 0.5f));
     glUniformMatrix4fv(glGetUniformLocation(cubeShaderProgramId, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
     glBindVertexArray(cubeVaoIds[0]);

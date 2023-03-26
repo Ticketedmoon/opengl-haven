@@ -66,9 +66,10 @@ Specular highlights are more inclined to the color of the light than the color o
 - Loading Object models [❌]
 
 **Stage #2**
+- Phong Lighting (ambient + diffuse + specular)[✅]
 - Blinn-Phong Lighting [❌]
 - Billboards [❌]
-- Multiple Shaders [❌]
+- Multiple Shaders [✅]
 - Custom Framebuffers [❌]
 - Text []
 - Advanced Materials (e.g., Normal Mapping) [❌]
