@@ -51,6 +51,7 @@ const char *fragmentShaderSource =
 	"uniform vec3 lightPos; \n"
 	"uniform float ambientStrength; \n"
 	"uniform vec3 cameraPos; \n"
+    "                                                                           \n"
     "void main() \n"
     "{\n"
     "    vec3 objectColour = vec3(1.0f, 0.75f, 0.10f);                                \n"
@@ -64,8 +65,7 @@ const char *fragmentShaderSource =
     "    float specularStrength = 0.5;                           \n"
     "    vec3 cameraDirection = normalize(cameraPos - FragmentPos);                           \n"
     "    vec3 reflectDir = reflect(-lightDir, norm);                           \n"
-
-    "    float spec = pow(max(dot(cameraDirection, reflectDir), 0.0), 128);                 \n"
+    "    float spec = pow(max(dot(cameraDirection, reflectDir), 0.0), 256);                 \n"
     "    vec3 specular = specularStrength * spec * lightColour;                            \n"
 
     "    if (diff > 0.0)                           \n"
@@ -423,6 +423,7 @@ void draw()
     glUniform1f(glGetUniformLocation(cubeShaderProgramId, "ambientStrength"), ambientStrength);
     glUniform3f(glGetUniformLocation(cubeShaderProgramId, "lightColour"), 1.0f, 1.0f, 1.0f);
     // Note: Can use 3fv uniform to pass glm::vec* objects, but require value_ptr call
+    
     glUniform3fv(glGetUniformLocation(cubeShaderProgramId, "cameraPos"), 1, glm::value_ptr(cameraPos));
 
     // 3d
@@ -448,7 +449,7 @@ void draw()
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
     float lightPosRadius = 2.0f;
-    glm::vec3 newLightPos = glm::vec3(lightPosRadius * sin(glfwGetTime()), lightPos.y, lightPosRadius * cos(glfwGetTime()));
+    glm::vec3 newLightPos = glm::vec3(lightPosRadius * sin(glfwGetTime()), lightPos.y, 1.5f * cos(glfwGetTime()));
     glUniform3fv(glGetUniformLocation(cubeShaderProgramId, "lightPos"), 1, glm::value_ptr(newLightPos));
 
     // Light source
