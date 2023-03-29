@@ -436,7 +436,7 @@ void draw()
                        cameraPos + cameraFront, // Target Pos
                        cameraUp); // Up Vector
 
-    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -8.0f));
+    view = glm::translate(view, glm::vec3(1.0f, 0.0f, -2.0f));
 	glUniformMatrix4fv(glGetUniformLocation(cubeShaderProgramId, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
     glm::mat4 model = glm::mat4(1.0f);
