@@ -1,5 +1,5 @@
 /*
- * This file has phon lighting applied and can be adjusted using the UP/DOWN arrow keys.
+ * This file has phong lighting applied in World Space and can be adjusted using the UP/DOWN arrow keys.
  * The light source will rotate around the xz-axis using sin/cos 
  *
  * Note: Specular lighting will only apply on the cube face adjacent to the light source.
