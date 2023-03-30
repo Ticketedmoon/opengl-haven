@@ -54,7 +54,7 @@ const char *fragmentShaderSource =
     "                                                                           \n"
     "void main() \n"
     "{\n"
-    "    vec3 objectColour = vec3(1.0f, 0.75f, 0.10f);                                \n"
+    "    vec3 objectColour = vec3(1.0f, 0.5f, 0.30f);                                \n"
     "    vec3 ambient = lightColour * ambientStrength;                         \n"
 
     "    vec3 norm = normalize(Normal);                           \n"
@@ -62,10 +62,10 @@ const char *fragmentShaderSource =
     "    float diff = max(dot(norm, lightDir), 0.0);                           \n"
     "    vec3 diffuse = diff * lightColour;                           \n"
 
-    "    float specularStrength = 0.5;                           \n"
+    "    float specularStrength = 1.0;                           \n"
     "    vec3 cameraDirection = normalize(cameraPos - FragmentPos);                           \n"
     "    vec3 reflectDir = reflect(-lightDir, norm);                           \n"
-    "    float spec = pow(max(dot(cameraDirection, reflectDir), 0.0), 256);                 \n"
+    "    float spec = pow(max(dot(cameraDirection, reflectDir), 0.0), 128);                 \n"
     "    vec3 specular = specularStrength * spec * lightColour;                            \n"
 
     "    if (diff > 0.0)                           \n"
@@ -151,8 +151,8 @@ float vertices[] = {
 };
 
 
-size_t WINDOW_WIDTH = 800;
-size_t WINDOW_HEIGHT = 600;
+size_t WINDOW_WIDTH = 1280;
+size_t WINDOW_HEIGHT = 720;
 
 float lastMouseX = WINDOW_WIDTH / 2;
 float lastMouseY = WINDOW_HEIGHT / 2;
