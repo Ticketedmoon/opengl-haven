@@ -67,7 +67,7 @@ Specular highlights are more inclined to the color of the light than the color o
 
 **Stage #2**
 - Phong Lighting (ambient + diffuse + specular)[✅]
-- Blinn-Phong Lighting [❌]
+- Blinn-Phong Lighting [✅]
 - Billboards [❌]
 - Multiple Shaders [✅]
 - Custom Framebuffers [❌]
