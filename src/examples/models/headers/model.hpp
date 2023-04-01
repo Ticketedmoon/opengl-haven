@@ -1,10 +1,10 @@
 #pragma once
 
+#include "mesh.hpp"
+
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-
-#include "mesh.hpp"
 
 #include "../../../headers/stb_image.h"
 

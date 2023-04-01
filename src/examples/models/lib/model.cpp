@@ -147,6 +147,7 @@ unsigned int Model::TextureFromFile(const char* path, const std::string& directo
     filename = directory + '/' + filename;
 
     unsigned int textureID;
+
     glGenTextures(1, &textureID);
 
     int width, height, nrComponents;
