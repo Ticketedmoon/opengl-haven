@@ -63,7 +63,7 @@ Specular highlights are more inclined to the color of the light than the color o
 - Drawing a triangle [✅]
 - Loading Textures [✅]
 - Applying Transformations [✅]
-- Loading Object models [❌]
+- Loading Object models [✅]
 
 **Stage #2**
 - Phong Lighting (ambient + diffuse + specular)[✅]
@@ -71,7 +71,7 @@ Specular highlights are more inclined to the color of the light than the color o
 - Billboards [❌]
 - Multiple Shaders [✅]
 - Custom Framebuffers [❌]
-- Text []
+- Text [❌]
 - Advanced Materials (e.g., Normal Mapping) [❌]
 
 **Stage #3**
