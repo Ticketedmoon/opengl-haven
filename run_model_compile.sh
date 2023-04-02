@@ -1,5 +1,5 @@
 g++ ./src/examples/models/lib/*.cpp \
-    ./src/examples/models/survival_backpack.cpp \
+    $1 \
     ./src/*.c \
     -o application.exe \
     -I./include \
