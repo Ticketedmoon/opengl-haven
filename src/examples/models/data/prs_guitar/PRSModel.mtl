@@ -10,6 +10,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 2
+map_Ks birds.png
 
 newmtl Black
 Ns 900.000000
@@ -70,6 +71,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 2
+map_Ks prs_logo.jpg
 
 newmtl Metal
 Ns 812.249999
@@ -80,6 +82,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 3
+map_Ks neckwood.jpg
 
 newmtl Strings
 Ns 225.000000
@@ -90,6 +93,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 3
+map_Ks subzero_body.jpg
 
 newmtl Sub_Zero
 Ns 323.999994
@@ -100,6 +104,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 2
+map_Ks subzero_body.jpg
 
 newmtl Trim
 Ns 506.250000
@@ -110,6 +115,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
+map_Ks subzero_body.jpg
 
 newmtl VolumeNobe
 Ns 380.250007
@@ -120,6 +126,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
+map_Ks numbers.jpg
 
 newmtl White
 Ns 225.000000
@@ -130,3 +137,4 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
+map_Kd subzero_body.jpg
