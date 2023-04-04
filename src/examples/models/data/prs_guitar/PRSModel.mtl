@@ -21,6 +21,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
+map_Ks subzero_body.jpg
 
 newmtl BlackMetal
 Ns 900.000000
@@ -41,6 +42,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
+map_Ks neckwood.jpg
 
 newmtl Glass
 Ns 323.999994
@@ -61,6 +63,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
+map_Ks subzero_body.jpg
 
 newmtl Logo
 Ns 323.999994
@@ -82,7 +85,6 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 3
-map_Ks neckwood.jpg
 
 newmtl Strings
 Ns 225.000000

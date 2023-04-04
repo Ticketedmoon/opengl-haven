@@ -130,6 +130,8 @@ int main()
         modelA.Draw(ourShader);
 
         model = glm::translate(model, glm::vec3(-5.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+        model = glm::rotate(model, (float)glfwGetTime() * glm::radians(90.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+
         ourShader.setMat4("model", model);
         modelB.Draw(ourShader);
 
