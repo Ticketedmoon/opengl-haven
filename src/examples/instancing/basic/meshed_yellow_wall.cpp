@@ -7,7 +7,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "../../headers/stb_image.h"
+#include "../../../headers/stb_image.h"
 
 #include <filesystem>
 
@@ -235,7 +235,7 @@ void render(GLFWwindow* window)
     float offset = 0.1f;
     for(int y = -10; y < 10; y += 2)
     {
-        for(int x = -10; x < 10; x += 2)
+        for(int x = -100; x < 100; x += 20)
         {
             glm::vec3 translation;
             translation.x = (float)x / 10.0f + offset;
@@ -445,6 +445,7 @@ void draw()
     model = glm::translate(model, cubePositions[0]);
     float angle = 45.0f * (1.5f); 
     model = glm::rotate(model, glm::radians(angle) * (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgramId, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
     // Instancing stuff
     for (unsigned int i = 0; i < 100; i++)
@@ -453,9 +454,8 @@ void draw()
         glUniform3fv(glGetUniformLocation(shaderProgramId, &name[0]), 1, glm::value_ptr(translations[i]));
     }
     
-    glUniformMatrix4fv(glGetUniformLocation(shaderProgramId, "model"), 1, GL_FALSE, glm::value_ptr(model));
     //glDrawElements(GL_TRIANGLES, TOTAL_VERTICES, GL_UNSIGNED_INT, 0);
-    glDrawElementsInstanced(GL_TRIANGLES, TOTAL_VERTICES, GL_UNSIGNED_INT, &indices, 100);
+    glDrawElementsInstanced(GL_TRIANGLES, TOTAL_VERTICES, GL_UNSIGNED_INT, 0, 100);
 }
 
 void storeVertexDataOnGpu()
