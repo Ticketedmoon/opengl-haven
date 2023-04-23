@@ -1,3 +1,27 @@
+/**
+ * While the basic examples (examples/instancing/basic) work fine for this specific use case, 
+ * whenever we are rendering a lot more than 100 instances (which is quite common) we will eventually hit a limit 
+ * on the amount of uniform data we can send to the shaders. 
+ * One alternative option is known as instanced arrays. 
+ * Instanced arrays are defined as a vertex attribute (allowing us to store much more data) that are updated per instance instead of per vertex.
+ * 
+ * With vertex attributes, at the start of each run of the vertex shader, the GPU will retrieve the next set of vertex attributes 
+ * that belong to the current vertex. When defining a vertex attribute as an instanced array however, the vertex shader only updates 
+ * the content of the vertex attribute per instance. 
+ * This allows us to use the standard vertex attributes for data per vertex and use the instanced array for storing data that is unique per instance.
+ *
+ * Because an instanced array is a vertex attribute, just like the position and color variables, we need to store its content in a 
+ * vertex buffer object and configure its attribute pointer. We're first going to store the translations array (from the previous section) in a new buffer object
+ *
+ * The magic behind how this works comes from the function: glVertexAttribDivisor(...)
+ * This function tells OpenGL when to update the content of a vertex attribute to the next element. 
+ * - Its first parameter is the vertex attribute in question.
+ * - The second parameter the attribute divisor. By default, the attribute divisor is 0 which tells OpenGL to update the content 
+ *   of the vertex attribute each iteration of the vertex shader. 
+ *   By setting this attribute to 1 we're telling OpenGL that we want to update the content of the vertex attribute when we start to render a new instance. 
+ *   By setting it to 2 we'd update the content every 2 instances and so on. 
+ *   By setting the attribute divisor to 1 we're effectively telling OpenGL that the vertex attribute at attribute location 2 is an instanced array.
+ */
 #include <cstdint>
 #include <glad/glad.h> 
 #include <GLFW/glfw3.h>
@@ -61,7 +85,9 @@ const char *vertexShaderSource =
     "uniform mat4 projection; \n"
     "void main() \n"
     "{\n"
-    "   gl_Position = projection * view * model * vec4(aPos + aOffset, 1.0); \n"
+    "   float scalar = gl_InstanceID / 100.0;                                \n"
+    "   vec3 newPos = aPos * scalar;                                         \n"
+    "   gl_Position = projection * view * model * vec4(newPos + aOffset, 1.0); \n"
     "}\0";
 
 const char *fragmentShaderSource = 
@@ -69,7 +95,7 @@ const char *fragmentShaderSource =
     "out vec4 myOutput; \n"
     "void main() \n"
     "{\n"
-    " myOutput = vec4(1, 1, 0, 1); \n"
+    " myOutput = vec4(0.25, 1, 0, 1); \n"
     "}\0";
 
 unsigned int vboId, vaoId, eboId;
@@ -139,7 +165,7 @@ int indices[] = {
 
 glm::vec3 translations[100];
 
-glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
+glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  60.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 
@@ -229,22 +255,23 @@ void render(GLFWwindow* window)
 	fragmentShaderId = applyShader(GL_FRAGMENT_SHADER, fragmentShaderSource);
 
 	buildShaderProgram();
-	storeVertexDataOnGpu();
 
     // build intancing offset array
     int index = 0;
     float offset = 0.1f;
-    for(int y = -200; y < 200; y += 40)
+    for (int y = -200; y < 200; y += 40)
     {
-        for(int x = -200; x < 200; x += 40)
+        for (int x = -200; x < 200; x += 40)
         {
-            glm::vec3 translation;
-            translation.x = (float)x / 10.0f + offset;
-            translation.y = (float)y / 10.0f + offset;
-            translation.z = 0;
-            translations[index++] = translation;
+            glm::vec3 object;
+            object.x = (float)x / 10.0f + offset;
+            object.y = (float)y / 10.0f + offset;
+            translations[index] = object;
+            index++;
         }
-    }  
+    }
+
+	storeVertexDataOnGpu();
 
 	while(!glfwWindowShouldClose(window))
 	{
@@ -448,16 +475,14 @@ void draw()
     model = glm::rotate(model, glm::radians(angle) * (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
     glUniformMatrix4fv(glGetUniformLocation(shaderProgramId, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
-    //glDrawElements(GL_TRIANGLES, TOTAL_VERTICES, GL_UNSIGNED_INT, 0);
     glDrawElementsInstanced(GL_TRIANGLES, TOTAL_VERTICES, GL_UNSIGNED_INT, 0, 100);
-
     glBindVertexArray(0); 
 }
 
 void storeVertexDataOnGpu()
 {
-    uint32_t totalInstances = sizeof(translations) / sizeof(glm::vec3); // 100
-                                                                        //
+    uint32_t totalInstances = sizeof(translations) / sizeof(glm::vec3);
+
     unsigned int instanceVBO;
     glGenBuffers(1, &instanceVBO);
     glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
@@ -480,8 +505,8 @@ void storeVertexDataOnGpu()
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 
-	glEnableVertexAttribArray(2);
     glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)(0));
     glBindBuffer(GL_ARRAY_BUFFER, 0); 
 
