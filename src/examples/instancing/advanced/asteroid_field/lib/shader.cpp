@@ -129,7 +129,7 @@ void Shader::setMat4(const std::string &name, const glm::mat4 &mat) const
 
 void Shader::checkCompileErrors(GLuint shader, std::string type)
 {
-    std::cout << "CHECKING SHADER CONFIGURATION..." << std::endl;
+    std::cout << "CHECKING SHADER CONFIGURATION FOR TYPE: " << type << std::endl;
     GLint success;
     GLchar infoLog[1024];
     if(type != "PROGRAM")

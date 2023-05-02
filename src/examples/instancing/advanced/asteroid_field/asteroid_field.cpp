@@ -40,77 +40,9 @@ float fov = 45.0f;
 
 Joystick joystick = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 
-unsigned int vboId, vaoId, eboId;
+unsigned int vaoId;
 
-float vertices[] = {
-    // Back
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-     0.0f,  0.5f, -0.5f,  1.0f, 1.0f,
-
-     0.0f,  0.5f, -0.5f,  0.0f, 0.0f,
-     1.0f,  0.5f, -0.5f,  1.0f, 0.0f,
-     0.5f,  1.5f, -0.5f,  1.0f, 1.0f,
-
-     0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-     1.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-     1.0f,  0.5f, -0.5f,  1.0f, 1.0f,
-
-    // Front
-    -0.5f, -0.5f, 0.0f,  0.0f, 0.0f,
-     0.5f, -0.5f, 0.0f,  1.0f, 0.0f,
-     0.0f,  0.5f, 0.0f,  1.0f, 1.0f,
-
-     0.0f,  0.5f, 0.0f,  0.0f, 0.0f,
-     1.0f,  0.5f, 0.0f,  1.0f, 0.0f,
-     0.5f,  1.5f, 0.0f,  1.0f, 1.0f,
-
-     0.5f, -0.5f, 0.0f,  0.0f, 0.0f,
-     1.5f, -0.5f, 0.0f,  1.0f, 0.0f,
-     1.0f,  0.5f, 0.0f,  1.0f, 1.0f,
-};
-
-int indices[] = {
-    // back
-
-    // left, right, top
-    0, 1, 2, // left
-    3, 4, 5, // top
-    6, 7, 8, // right
-
-    // front
-    // left, right, top
-    9, 10, 11, // left
-    12, 13, 14, // top
-    15, 16, 17, // right
-
-    // left wall
-    5, 14, 0,
-    0, 9, 14,
-    // right wall
-    5, 14, 7,
-    7, 16, 14,
-    // floor
-    0, 9, 7,
-    7, 9, 16,
-    // inner left wall
-    1, 3, 11,
-    1, 10, 11,
-    // inner right wall
-    6, 8, 15,
-    8, 15, 17,
-    // ceiling wall
-    3, 4, 12,
-    4, 12, 13
-};
-
-glm::vec3 cubePositions[] = {
-    glm::vec3( 0.0f,  0.0f,  0.0f)
-};
-
-glm::vec3 translations[100];
-
-glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  5.0f);
+glm::vec3 cameraPos   = glm::vec3(0.0f, 20.0f,  200.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 
@@ -118,6 +50,7 @@ float deltaTime = 0.0f;	// Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
 
 unsigned int TOTAL_VERTICES = 54;
+unsigned int ASTEROID_AMOUNT = 50000;
 
 // Function Declarations.
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -127,8 +60,10 @@ void joystick_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 void render(GLFWwindow* window);
-void storeVertexDataOnGpu();
-void draw(Shader& shader, Model& planetModel, Model& asteroidModel);
+void storeVertexDataOnGpu(Model& rock);
+void draw(Shader& planetShader, Model& planetModel, Shader& rockShader, Model& rockModel);
+
+glm::mat4* modelMatrices;
 
 int main() 
 {
@@ -184,38 +119,22 @@ int main()
 	render(window);
 
 	glDeleteVertexArrays(1, &vaoId);
-    glDeleteBuffers(1, &vboId);
-
 	glfwTerminate();
     return 0;
 }
 
 void render(GLFWwindow* window)
 {
-    // build intancing offset array
-    int index = 0;
-    float offset = 0.1f;
-    for (int y = -200; y < 200; y += 40)
-    {
-        for (int x = -200; x < 200; x += 40)
-        {
-            glm::vec3 object;
-            object.x = (float)x / 10.0f + offset;
-            object.y = (float)y / 10.0f + offset;
-            translations[index] = object;
-            index++;
-        }
-    }
-
-	storeVertexDataOnGpu();
-
-    Shader ourShader("src/examples/instancing/advanced/asteroid_field/data/shaders/shader.vs", "src/examples/instancing/advanced/asteroid_field/data/shaders/shader.fs");
+    Shader planetShader("src/examples/instancing/advanced/asteroid_field/data/shaders/planet_shader.vs", "src/examples/instancing/advanced/asteroid_field/data/shaders/shader.fs");
+    Shader rockShader("src/examples/instancing/advanced/asteroid_field/data/shaders/rock_shader.vs", "src/examples/instancing/advanced/asteroid_field/data/shaders/shader.fs");
 
     char* planetModelPath = "src/examples/instancing/advanced/asteroid_field/data/planet/planet.obj";
     Model planetModel(planetModelPath);
 
-    char* asteroidPlanetPath = "src/examples/instancing/advanced/asteroid_field/data/asteroid/rock.obj";
-    Model asteroidModel(asteroidPlanetPath);
+    char* rockModelPath = "src/examples/instancing/advanced/asteroid_field/data/asteroid/rock.obj";
+    Model rockModel(rockModelPath);
+
+	storeVertexDataOnGpu(rockModel);
 
 	while(!glfwWindowShouldClose(window))
 	{
@@ -232,7 +151,7 @@ void render(GLFWwindow* window)
 		processInput(window);
 
 		// Rendering commands
-		draw(ourShader, planetModel, asteroidModel);
+		draw(planetShader, planetModel, rockShader, rockModel);
 
 		// check and call events and swap the buffers
 		glfwSwapBuffers(window);
@@ -379,17 +298,14 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
     fov -= (float)yoffset;
 }
 
-void draw(Shader& ourShader, Model& planetModel, Model& asteroidModel)
+void draw(Shader& planetShader, Model& planetModel, Shader& rockShader, Model& rockModel)
 {
 	// Clear the screen with a colour
 	// glClearColor(0.0f, 0.0f, 0.5f, 0.2f);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // also clear the depth buffer now!
 
-	// Every shader and rendering call after the `glUseProgram` call will now use this program object (and thus the shaders).
-    ourShader.use();
-
-    // 3d
+    // 4d
     glm::mat4 view = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
     float radius = 30.0f;
     float camX = static_cast<float>(sin(glfwGetTime()) * radius);
@@ -399,65 +315,106 @@ void draw(Shader& ourShader, Model& planetModel, Model& asteroidModel)
                        cameraPos + cameraFront, // Target Pos
                        cameraUp); // Up Vector
     view = glm::translate(view, glm::vec3(0.0f, 0.0f, -8.0f));
-    glm::mat4 projection = glm::perspective(glm::radians(fov), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
-
-    ourShader.setMat4("projection", projection);
-    ourShader.setMat4("view", view);
-
-	glBindVertexArray(vaoId);
+    glm::mat4 projection = glm::perspective(glm::radians(fov), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 1000.0f);
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, cubePositions[0]);
+    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(16.0f, 16.0f, 16.0f));
 
-    float angle = 10.0f * (1.5f); 
-    model = glm::rotate(model, glm::radians(angle) * (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
-    ourShader.setMat4("model", model);
-    planetModel.Draw(ourShader);
+    // draw planet
+    planetShader.use();
+    planetShader.setMat4("projection", projection);
+    planetShader.setMat4("view", view);
+    planetShader.setMat4("model", model);
+    planetModel.Draw(planetShader);
+    
+    rockShader.use();
+    rockShader.setMat4("projection", projection);
+    rockShader.setMat4("view", view);
+    rockShader.setInt("texture_diffuse1", 0);
 
-    angle = 30.0f * (1.5f); 
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, cubePositions[0]);
-    model = glm::rotate(model, glm::radians(angle) * (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 1.0f));
-    model = glm::scale(model, glm::vec3(0.25, 0.25, 0.25));
-    ourShader.setMat4("model", model);
-    asteroidModel.Draw(ourShader);
+    // OLD SOLUTION, ONE DRAW CALL PER OBJECT WITH A NEW MODEL MATRIX
+    /*
+    for (int i = 0; i < ASTEROID_AMOUNT; i++)
+    {
+        rockShader.setMat4("model", modelMatrices[i]);
+        rockModel.Draw(planetShader);
+    }
+    */
 
-    glDrawElementsInstanced(GL_TRIANGLES, TOTAL_VERTICES, GL_UNSIGNED_INT, 0, 100);
-    glBindVertexArray(0); 
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, rockModel.textures_loaded[0].id); // note: we also made the textures_loaded vector public (instead of private) from the model class.
+    for (unsigned int i = 0; i < rockModel.meshes.size(); i++)
+    {
+        glBindVertexArray(rockModel.meshes[i].VAO);
+        glDrawElementsInstanced(GL_TRIANGLES, static_cast<unsigned int>(rockModel.meshes[i].indices.size()), GL_UNSIGNED_INT, 0, ASTEROID_AMOUNT);
+        glBindVertexArray(0);
+    }
 }
 
-void storeVertexDataOnGpu()
+void storeVertexDataOnGpu(Model& rock)
 {
-    uint32_t totalInstances = sizeof(translations) / sizeof(glm::vec3);
-    std::cout << totalInstances << std::endl;
+    // generate a large list of semi-random model transformation matrices
+    // ------------------------------------------------------------------
+    modelMatrices = new glm::mat4[ASTEROID_AMOUNT];
+    srand(static_cast<unsigned int>(glfwGetTime())); // initialize random seed
+    float radius = 150.0;
+    float offset = 25.0f;
+    for (unsigned int i = 0; i < ASTEROID_AMOUNT; i++)
+    {
+        glm::mat4 model = glm::mat4(1.0f);
+        // 1. translation: displace along circle with 'radius' in range [-offset, offset]
+        float angle = (float)i / (float)ASTEROID_AMOUNT * 360.0f;
+        float displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+        float x = sin(angle) * radius + displacement;
+        displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+        float y = displacement * 0.4f; // keep height of asteroid field smaller compared to width of x and z
+        displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+        float z = cos(angle) * radius + displacement;
+        model = glm::translate(model, glm::vec3(x, y, z));
 
-    unsigned int instanceVBO;
-    glGenBuffers(1, &instanceVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * totalInstances, &translations[0], GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+        // 2. scale: Scale between 0.05 and 0.25f
+        float scale = static_cast<float>((rand() % 20) / 100.0 + 0.05);
+        model = glm::scale(model, glm::vec3(scale));
 
-	glGenVertexArrays(1, &vaoId);
-	glGenBuffers(1, &vboId);
-	glGenBuffers(1, &eboId);
-	glBindVertexArray(vaoId);
+        // 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
+        float rotAngle = static_cast<float>((rand() % 360));
+        model = glm::rotate(model, rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
 
-	glBindBuffer(GL_ARRAY_BUFFER, vboId);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+        // 4. now add to list of matrices
+        modelMatrices[i] = model;
+    }
+    
+    // configure instanced array
+    // -------------------------
+    unsigned int buffer;
+    glGenBuffers(1, &buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    glBufferData(GL_ARRAY_BUFFER, ASTEROID_AMOUNT * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
 
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    // set transformation matrices as an instance vertex attribute (with divisor 1)
+    // note: we're cheating a little by taking the, now publicly declared, VAO of the model's mesh(es) and adding new vertexAttribPointers
+    // normally you'd want to do this in a more organized fashion, but for learning purposes this will do.
+    // -----------------------------------------------------------------------------------------------------------------------------------
+    for (unsigned int i = 0; i < rock.meshes.size(); i++)
+    {
+        unsigned int VAO = rock.meshes[i].VAO;
+        glBindVertexArray(VAO);
+        // set attribute pointers for matrix (4 times vec4)
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
+        glEnableVertexAttribArray(4);
+        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
+        glEnableVertexAttribArray(5);
+        glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
+        glEnableVertexAttribArray(6);
+        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
 
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+        glVertexAttribDivisor(3, 1);
+        glVertexAttribDivisor(4, 1);
+        glVertexAttribDivisor(5, 1);
+        glVertexAttribDivisor(6, 1);
 
-    glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)(0));
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0); 
-    glVertexAttribDivisor(2, 1);
+        glBindVertexArray(0);
+    }
 }
 
