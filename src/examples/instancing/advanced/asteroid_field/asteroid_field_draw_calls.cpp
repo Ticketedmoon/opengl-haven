@@ -49,8 +49,7 @@ glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 float deltaTime = 0.0f;	// Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
 
-unsigned int TOTAL_VERTICES = 54;
-unsigned int ASTEROID_AMOUNT = 50000;
+unsigned int ASTEROID_AMOUNT = 10000;
 
 // Function Declarations.
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -126,7 +125,7 @@ int main()
 void render(GLFWwindow* window)
 {
     Shader planetShader("src/examples/instancing/advanced/asteroid_field/data/shaders/planet_shader.vs", "src/examples/instancing/advanced/asteroid_field/data/shaders/shader.fs");
-    Shader rockShader("src/examples/instancing/advanced/asteroid_field/data/shaders/rock_shader.vs", "src/examples/instancing/advanced/asteroid_field/data/shaders/shader.fs");
+    Shader rockShader("src/examples/instancing/advanced/asteroid_field/data/shaders/rock_shader_v2.vs", "src/examples/instancing/advanced/asteroid_field/data/shaders/shader.fs");
 
     char* planetModelPath = "src/examples/instancing/advanced/asteroid_field/data/planet/planet.obj";
     Model planetModel(planetModelPath);
@@ -174,24 +173,22 @@ void processInput(GLFWwindow *window)
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
 
+    const float cameraSpeed = 100.0f * deltaTime; // adjust accordingly
+                                                //
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS || joystick.leftY < -0.3)
     {
-        const float cameraSpeed = 2.5f * deltaTime; // adjust accordingly
         cameraPos += (cameraSpeed * cameraFront);
     }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS || joystick.leftY > 0.3)
     {
-        const float cameraSpeed = 2.5f * deltaTime; // adjust accordingly
         cameraPos -= (cameraSpeed * cameraFront);
     }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS || joystick.leftX < -0.3)
     {
-        const float cameraSpeed = 2.5f * deltaTime; // adjust accordingly
         cameraPos -= (glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed);
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS || joystick.leftX > 0.3)
     {
-        const float cameraSpeed = 2.5f * deltaTime; // adjust accordingly
         cameraPos += (glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed);
     }
 
@@ -315,10 +312,13 @@ void draw(Shader& planetShader, Model& planetModel, Shader& rockShader, Model& r
                        cameraPos + cameraFront, // Target Pos
                        cameraUp); // Up Vector
     view = glm::translate(view, glm::vec3(0.0f, 0.0f, -8.0f));
-    glm::mat4 projection = glm::perspective(glm::radians(fov), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 1000.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(fov), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 2000.0f);
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-    model = glm::scale(model, glm::vec3(16.0f, 16.0f, 16.0f));
+    model = glm::scale(model, glm::vec3(24.0f, 24.0f, 24.0f));
+
+    float angleOverTime = glfwGetTime() * 0.1f; 
+    model = glm::rotate(model, angleOverTime, glm::vec3(0.0f, 1.0f, 1.0f));
 
     // draw planet
     planetShader.use();
@@ -330,24 +330,12 @@ void draw(Shader& planetShader, Model& planetModel, Shader& rockShader, Model& r
     rockShader.use();
     rockShader.setMat4("projection", projection);
     rockShader.setMat4("view", view);
-    rockShader.setInt("texture_diffuse1", 0);
 
-    // OLD SOLUTION, ONE DRAW CALL PER OBJECT WITH A NEW MODEL MATRIX
-    /*
     for (int i = 0; i < ASTEROID_AMOUNT; i++)
     {
-        rockShader.setMat4("model", modelMatrices[i]);
-        rockModel.Draw(planetShader);
-    }
-    */
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, rockModel.textures_loaded[0].id); // note: we also made the textures_loaded vector public (instead of private) from the model class.
-    for (unsigned int i = 0; i < rockModel.meshes.size(); i++)
-    {
-        glBindVertexArray(rockModel.meshes[i].VAO);
-        glDrawElementsInstanced(GL_TRIANGLES, static_cast<unsigned int>(rockModel.meshes[i].indices.size()), GL_UNSIGNED_INT, 0, ASTEROID_AMOUNT);
-        glBindVertexArray(0);
+        glm::mat4 rotationModel = glm::rotate(modelMatrices[i], angleOverTime, glm::vec3(0.4f, 0.6f, 0.8f));
+        rockShader.setMat4("model", rotationModel);
+        rockModel.Draw(rockShader);
     }
 }
 
@@ -362,18 +350,23 @@ void storeVertexDataOnGpu(Model& rock)
     for (unsigned int i = 0; i < ASTEROID_AMOUNT; i++)
     {
         glm::mat4 model = glm::mat4(1.0f);
+        
         // 1. translation: displace along circle with 'radius' in range [-offset, offset]
         float angle = (float)i / (float)ASTEROID_AMOUNT * 360.0f;
-        float displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+
+        float displacement = (rand() % (int)(1 * offset * 100)) / 100.0f - offset;
         float x = sin(angle) * radius + displacement;
-        displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+
+        displacement = (rand() % (int)(1 * offset * 100)) / 100.0f - offset;
         float y = displacement * 0.4f; // keep height of asteroid field smaller compared to width of x and z
+                                       //
         displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
         float z = cos(angle) * radius + displacement;
+
         model = glm::translate(model, glm::vec3(x, y, z));
 
-        // 2. scale: Scale between 0.05 and 0.25f
-        float scale = static_cast<float>((rand() % 20) / 100.0 + 0.05);
+        float scale = static_cast<float>((rand() % 100) / 100.0);
+        std::cout << scale << std::endl;
         model = glm::scale(model, glm::vec3(scale));
 
         // 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
@@ -394,7 +387,7 @@ void storeVertexDataOnGpu(Model& rock)
     // set transformation matrices as an instance vertex attribute (with divisor 1)
     // note: we're cheating a little by taking the, now publicly declared, VAO of the model's mesh(es) and adding new vertexAttribPointers
     // normally you'd want to do this in a more organized fashion, but for learning purposes this will do.
-    // -----------------------------------------------------------------------------------------------------------------------------------
+    std::cout << "Total Rock Meshes: " << rock.meshes.size() << std::endl;
     for (unsigned int i = 0; i < rock.meshes.size(); i++)
     {
         unsigned int VAO = rock.meshes[i].VAO;
