@@ -11,6 +11,7 @@ mkdir -p deps
 cd deps
 git clone https://github.com/glfw/glfw.git
 git clone https://github.com/assimp/assimp.git
+git clone https://github.com/ocornut/imgui.git
 
 cd glfw
 cmake -G "Unix Makefiles"

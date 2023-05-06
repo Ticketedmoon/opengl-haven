@@ -1,5 +1,10 @@
 #include <glad/glad.h> 
 #include <GLFW/glfw3.h>
+
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -54,6 +59,7 @@ unsigned int ASTEROID_AMOUNT = 10000;
 
 // Function Declarations.
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void window_focus_callback(GLFWwindow* window, int focused);
 void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void joystick_callback(GLFWwindow* window, double xpos, double ypos);
@@ -116,6 +122,26 @@ int main()
     // Scroll callback (change fov of perspective project based on y coordinate)
     glfwSetScrollCallback(window, scroll_callback); 
 
+    glfwSetWindowFocusCallback(window, window_focus_callback);
+
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.WantCaptureMouse |= true;
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsLight();
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 330");
+
+    glfwWindowHint(GLFW_FOCUSED, GLFW_FALSE);
+    
 	render(window);
 
 	glDeleteVertexArrays(1, &vaoId);
@@ -130,10 +156,17 @@ void render(GLFWwindow* window)
     char* rockModelPath = "src/examples/instancing/advanced/asteroid_field/data/asteroid/rock.obj";
     Model rockModel(rockModelPath);
 
+    bool show_window = false;
+
 	storeVertexDataOnGpu(rockModel);
 
 	while(!glfwWindowShouldClose(window))
 	{
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
         joystickPresent = glfwJoystickPresent(GLFW_JOYSTICK_1);
 
         if (joystickPresent)
@@ -146,8 +179,21 @@ void render(GLFWwindow* window)
 		// Input
 		processInput(window);
 
+        // Imgui
+        ImGui::Begin("My Window", &show_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+        ImGui::Text("Hello from ImGuI!");
+        if (ImGui::Button("Close Me"))
+        {
+            show_window = false;
+        }
+        ImGui::End();
+
+        ImGui::Render();
+
 		// Rendering commands
 		draw(rockShader, rockModel);
+
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		// check and call events and swap the buffers
 		glfwSwapBuffers(window);
@@ -290,6 +336,22 @@ void joystick_callback(GLFWwindow* window, double xpos, double ypos)
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     fov -= (float)yoffset;
+}
+
+void window_focus_callback(GLFWwindow* window, int focused)
+{
+
+    std::cout << "focused: " << focused << std::endl;
+    if (focused)
+    {
+        // The window gained input focus
+        glfwWindowHint(GLFW_FOCUSED, 0);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+    else
+    {
+        // The window lost input focus
+    }
 }
 
 void draw(Shader& rockShader, Model& rockModel)
