@@ -40,6 +40,7 @@ float yaw = -90.0f;
 
 bool joystickPresent = false;
 bool firstMouse = true;
+bool imGuiMode = false;
 
 float fov = 45.0f;
 
@@ -59,7 +60,8 @@ unsigned int ASTEROID_AMOUNT = 10000;
 
 // Function Declarations.
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void window_focus_callback(GLFWwindow* window, int focused);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
 void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void joystick_callback(GLFWwindow* window, double xpos, double ypos);
@@ -100,20 +102,9 @@ int main()
 
 	// Viewport dictates how we want to display the data and coordinates with respect to the window
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback); 
-
-    /* 
-        Tell GLFW that it should hide the cursor but still capture it. 
-        Capturing a cursor means that, once the application has focus, the mouse cursor stays within the center of the window.
-        Wherever we move the mouse it won't be visible and it should not leave the window. This is perfect for an FPS camera system.
-    */
+    glfwSetKeyCallback(window, key_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    /* 
-       Enable depth buffer
-       The depth is stored within each fragment (as the fragment's z value) and whenever the fragment wants to output its color, 
-       OpenGL compares its depth values with the z-buffer. If the current fragment is behind the other fragment it is discarded, 
-       otherwise overwritten. This process is called depth testing and is done automatically by OpenGL.
-    */
     glEnable(GL_DEPTH_TEST);
 
     // Register mouse callback - Each time mouse moves this will be called with the (x,y) coords of the mouse.
@@ -122,15 +113,12 @@ int main()
     // Scroll callback (change fov of perspective project based on y coordinate)
     glfwSetScrollCallback(window, scroll_callback); 
 
-    glfwSetWindowFocusCallback(window, window_focus_callback);
-
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-    io.WantCaptureMouse |= true;
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
@@ -140,11 +128,16 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
-    glfwWindowHint(GLFW_FOCUSED, GLFW_FALSE);
-    
 	render(window);
 
+    // Cleanup
 	glDeleteVertexArrays(1, &vaoId);
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
+    glfwDestroyWindow(window);
 	glfwTerminate();
     return 0;
 }
@@ -156,12 +149,14 @@ void render(GLFWwindow* window)
     char* rockModelPath = "src/examples/instancing/advanced/asteroid_field/data/asteroid/rock.obj";
     Model rockModel(rockModelPath);
 
-    bool show_window = false;
+    bool show_window = true;
 
 	storeVertexDataOnGpu(rockModel);
 
 	while(!glfwWindowShouldClose(window))
 	{
+		glfwPollEvents();    
+
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -179,14 +174,20 @@ void render(GLFWwindow* window)
 		// Input
 		processInput(window);
 
-        // Imgui
-        ImGui::Begin("My Window", &show_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-        ImGui::Text("Hello from ImGuI!");
-        if (ImGui::Button("Close Me"))
+        // ImGui Windows
+        if (show_window)
         {
-            show_window = false;
+            // Imgui
+            ImGui::Begin("My Window", &show_window);   
+
+            // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+            ImGui::Text("Hello from ImGuI!");
+            if (ImGui::Button("Close Me"))
+            {
+                show_window = false;
+            }
+            ImGui::End();
         }
-        ImGui::End();
 
         ImGui::Render();
 
@@ -197,7 +198,6 @@ void render(GLFWwindow* window)
 
 		// check and call events and swap the buffers
 		glfwSwapBuffers(window);
-		glfwPollEvents();    
 	}
 }
 
@@ -206,9 +206,26 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (key == GLFW_KEY_F && action == GLFW_PRESS)
+    {
+        if (imGuiMode) 
+        {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        } 
+        else
+        {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
+        imGuiMode = !imGuiMode;
+    }
+}
+
 void processInput(GLFWwindow *window)
 {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) 
+    {
 		glfwSetWindowShouldClose(window, true);
 	}
 
@@ -267,6 +284,10 @@ void processInput(GLFWwindow *window)
 */
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
+    if (imGuiMode) 
+    {
+        return;
+    }
     if (firstMouse)
     {
         lastMouseX = xpos;
@@ -336,22 +357,6 @@ void joystick_callback(GLFWwindow* window, double xpos, double ypos)
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     fov -= (float)yoffset;
-}
-
-void window_focus_callback(GLFWwindow* window, int focused)
-{
-
-    std::cout << "focused: " << focused << std::endl;
-    if (focused)
-    {
-        // The window gained input focus
-        glfwWindowHint(GLFW_FOCUSED, 0);
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    }
-    else
-    {
-        // The window lost input focus
-    }
 }
 
 void draw(Shader& rockShader, Model& rockModel)
