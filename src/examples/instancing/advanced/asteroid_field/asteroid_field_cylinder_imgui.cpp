@@ -56,7 +56,7 @@ float deltaTime = 0.0f;	// Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
 
 unsigned int TOTAL_VERTICES = 54;
-unsigned int ASTEROID_AMOUNT = 10000;
+int ASTEROID_AMOUNT = 100;
 
 // Function Declarations.
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -150,6 +150,7 @@ void render(GLFWwindow* window)
     Model rockModel(rockModelPath);
 
     bool show_window = true;
+    ImVec4 clear_color = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
 
 	storeVertexDataOnGpu(rockModel);
 
@@ -182,7 +183,15 @@ void render(GLFWwindow* window)
 
             // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
             ImGui::Text("Hello from ImGuI!");
-            if (ImGui::Button("Close Me"))
+            ImGui::SliderInt("Rock Amount", &ASTEROID_AMOUNT, 0, 50000);            // Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+
+            if (ImGui::Button("Confirm"))
+            {
+	            storeVertexDataOnGpu(rockModel);
+            }
+
+            if (ImGui::Button("Close"))
             {
                 show_window = false;
             }
@@ -190,6 +199,10 @@ void render(GLFWwindow* window)
         }
 
         ImGui::Render();
+
+        // Clear the screen with a colour
+        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // also clear the depth buffer now!
 
 		// Rendering commands
 		draw(rockShader, rockModel);
@@ -361,11 +374,6 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 void draw(Shader& rockShader, Model& rockModel)
 {
-	// Clear the screen with a colour
-	// glClearColor(0.0f, 0.0f, 0.5f, 0.2f);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // also clear the depth buffer now!
-
     // 4d
     glm::mat4 view = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
     float radius = 30.0f;
