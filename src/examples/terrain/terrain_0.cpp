@@ -15,6 +15,7 @@
 #include <iostream>
 #include <cstdint>
 #include <filesystem>
+#include <vector>
 
 #include "./headers/shader.hpp"
 #include "./headers/model.hpp"
@@ -30,6 +31,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void render(GLFWwindow* window);
 void storeVertexDataOnGpu();
 void draw(Shader& shader);
+void buildPositionData();
 
 struct Joystick {
     float leftX;
@@ -58,33 +60,33 @@ float fov = 45.0f;
 
 Joystick joystick = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 
-glm::vec3 cubePositions[] = {
-    glm::vec3(0.0f, 0.0f, 0.0f)
-};
-
 unsigned int vaoId;
 unsigned int vboId, eboId;
 
-glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
+glm::vec3 cameraPos   = glm::vec3(0.0f, 1.0f,  2.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 
 float deltaTime = 0.0f;	// Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
+unsigned int polygonMode = 0;
 
-int TOTAL_VERTICES = 4;
+int TOTAL_VERTICES_PER_TILE = 6;
+int TOTAL_TILES = 1;
+int MAX_TOTAL_TILES = 500;
+
+std::vector<glm::vec3> cubePositions;
 
 float vertices[] = {
-    0.5f, 0.5f, 0.0f,
-    0.5f, -0.5f, 0.0f,
-    -0.5f, -0.5, 0.0f
-    -0.5f, 0.5f, 0.0f
+    -0.5f, 0.0f, 0.0f,
+    -0.5f, 0.0f, 1.0f,
+    0.5f,  0.0f, 0.0f,
+    0.5f,  0.0f, 1.0f,
 };
-
 
 int indices[] = {
     0, 1, 2,
-    2, 3, 0
+    1, 3, 2
 };
 
 int main() 
@@ -127,6 +129,9 @@ int main()
     // Scroll callback (change fov of perspective project based on y coordinate)
     glfwSetScrollCallback(window, scroll_callback); 
 
+    // Default polygon mode
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -166,6 +171,7 @@ void render(GLFWwindow* window)
     ImVec4 clear_color = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
 
 	storeVertexDataOnGpu();
+    buildPositionData();
 
 	while(!glfwWindowShouldClose(window))
 	{
@@ -194,12 +200,13 @@ void render(GLFWwindow* window)
 
             // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
             ImGui::Text("Hello from ImGuI!");
-            ImGui::SliderInt("Total vertices", &TOTAL_VERTICES, 0, 50000);            // Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::SliderInt("Total vertices", &TOTAL_TILES, 0, MAX_TOTAL_TILES);            // Edit 1 float using a slider from 0.0f to 1.0f
             ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
 
             if (ImGui::Button("Confirm"))
             {
 	            storeVertexDataOnGpu();
+                buildPositionData();
             }
 
             if (ImGui::Button("Close"))
@@ -245,6 +252,28 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         }
         imGuiMode = !imGuiMode;
     }
+
+    if (key == GLFW_KEY_L && action == GLFW_PRESS)
+    {
+        if (polygonMode == 0)
+        {
+            std::cout << "lines" << std::endl;
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            polygonMode = 1;
+        }
+        else if (polygonMode == 1)
+        {
+            std::cout << "points" << std::endl;
+            glPolygonMode(GL_FRONT_AND_BACK, GL_POINTS);
+            polygonMode = 2;
+        }
+        else 
+        {
+            std::cout << "fill" << std::endl;
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            polygonMode = 0;
+        }
+    }
 }
 
 void processInput(GLFWwindow *window)
@@ -258,7 +287,7 @@ void processInput(GLFWwindow *window)
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
 
-    const float cameraSpeed = 2.5f * deltaTime; // adjust accordingly
+    const float cameraSpeed = 10.0f * deltaTime; // adjust accordingly
                                                 //
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS || joystick.leftY < -0.3)
     {
@@ -395,17 +424,19 @@ void draw(Shader& shader)
     view = glm::translate(view, glm::vec3(0.0f, 0.0f, -8.0f));
     shader.setMat4("view", view);
 
-    glm::mat4 projection = glm::perspective(glm::radians(fov), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(fov), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 3000.0f);
     shader.setMat4("projection", projection);
+    
+    for (int i = 0; i < cubePositions.size(); i++)
+    {
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, cubePositions.at(i));
+        shader.setMat4("model", model);
 
-    glBindVertexArray(vaoId);
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, cubePositions[0]);
-    shader.setMat4("model", model);
-
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-    glBindVertexArray(0);
+        glBindVertexArray(vaoId);
+        glDrawElements(GL_TRIANGLES, TOTAL_VERTICES_PER_TILE, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
+    }
 }
 
 void storeVertexDataOnGpu()
@@ -429,3 +460,26 @@ void storeVertexDataOnGpu()
     glBindVertexArray(0);
 }
 
+void buildPositionData()
+{
+    if (cubePositions.size() > 0)
+    {
+        cubePositions.clear();
+    }
+
+    int halfTilesTotal = (TOTAL_TILES / 2) + 1;
+    std::cout << TOTAL_TILES << ", " << halfTilesTotal << std::endl;
+
+    for (int i = 0; i < halfTilesTotal; i++)
+    {
+        for (int j = 0; j < halfTilesTotal; j++)
+        {
+            cubePositions.emplace_back(glm::vec3(i, 0.0f, j));
+        }
+    }
+
+    for (int i = 0; i < cubePositions.size(); i++)
+    {
+        std::cout << "item: " << cubePositions.at(i).x << ", " << cubePositions.at(i).z << std::endl;
+    }
+}
